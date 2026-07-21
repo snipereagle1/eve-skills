@@ -5,15 +5,37 @@
 # when CCP ships an ESI update lives here.
 #
 # MAINTENANCE: to re-verify the skill, walk `sources`, refetch each `url`, and
-# update `last_verified` (and `verified_compat_date` if the spec's accepted
-# compat dates changed). `status: legacy` entries are kept only for upgraders.
+# update `last_verified` (and `verified_compat_date` to the latest compat date).
+# `status: legacy`/`sunset` entries are kept only for upgraders.
+#
+# AUTOMATED REFRESH: `/refresh-esi-manifest` launches the `manifest-refresher`
+# subagent (report-only). It reads the `role: anchor` source for the latest
+# compat date, crawls `role: discovery` sources for new protocol/spec changes,
+# liveness-checks the rest, and prints proposed edits. It never writes this file
+# — you apply what it proposes.
+#
+# SOURCE ROLES (agent hints; a source with no `role:` is a leaf = liveness only):
+#   role: anchor    -> live value must match a meta field (latest compat date)
+#   role: discovery -> crawl this index/feed for new entries; honor meta.discovery_scope
+#   role: skip      -> do not fetch (auth-gated / not machine-checkable)
+# The authoritative protocol/spec change feed is GET /meta/changelog (esi-changelog);
+# the blog index is secondary/narrative. The latest valid compat date comes from
+# GET /meta/compatibility-dates (esi-compatibility-dates).
 
 meta:
   esi_base_url: https://esi.evetech.net
   # ESI versions the whole application against a date (not per-route /v1 numbers).
   compat_date_header: X-Compatibility-Date          # or `compatibility_date` query param
-  verified_compat_date: "2020-01-01"                # only value in the live spec enum at last_verified
+  # Latest compat date the skill is verified against. ESI accepts any date in
+  # GET /meta/compatibility-dates (2020-01-01 base .. latest); track the LATEST
+  # (element [0]), not the base. The openapi.json enum only shows the base — ignore it.
+  verified_compat_date: "2026-07-21"                # latest per /meta/compatibility-dates
   last_verified: "2026-07-21"
+  # Discovery filter for the refresh agent — what this manifest tracks:
+  discovery_scope: >-
+    Protocol/spec mechanics only — compat-date model, spec format, caching,
+    rate-limits, and route lifecycle (deprecations/removals). NOT individual
+    endpoint or feature announcements (those live in the OpenAPI spec).
 
 # Volatile protocol facts the discipline leans on. Header names are semi-stable;
 # re-verify against the OpenAPI spec + best-practices docs below.
@@ -53,6 +75,20 @@ sources:
     kind: spec
     status: canonical
     last_verified: "2026-07-21"
+  - id: esi-compatibility-dates
+    url: https://esi.evetech.net/meta/compatibility-dates
+    purpose: Canonical list of valid compat dates, newest first. Anchor — element [0] is the latest -> meta.verified_compat_date.
+    kind: endpoint
+    role: anchor
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: esi-changelog
+    url: https://esi.evetech.net/meta/changelog
+    purpose: Authoritative machine-readable API changelog, keyed by compat date; each route change flagged is_breaking. Primary protocol/spec discovery feed.
+    kind: endpoint
+    role: discovery
+    status: canonical
+    last_verified: "2026-07-21"
   - id: openapi-spec-30
     url: https://esi.evetech.net/meta/openapi-3.0.json
     purpose: Same spec, OpenAPI 3.0 variant for tooling that lacks 3.1 support.
@@ -61,9 +97,10 @@ sources:
     last_verified: "2026-07-21"
   - id: swagger-spec-legacy
     url: https://esi.evetech.net/latest/swagger.json
-    purpose: Legacy Swagger 2.0 spec (route-versioned). Frozen; slated for removal. Upgraders only.
+    purpose: Legacy Swagger 2.0 spec (route-versioned). Upgraders only. Removal CONFIRMED — /latest/swagger.json and /_latest/swagger.json start 404ing 2026-08-11 (see blog-goodbye-swagger).
     kind: spec
-    status: legacy
+    status: sunset
+    removal_date: "2026-08-11"
     last_verified: "2026-07-21"
   - id: api-explorer
     url: https://developers.eveonline.com/api-explorer
@@ -111,6 +148,7 @@ sources:
     url: https://developers.eveonline.com/applications
     purpose: Register an application to obtain a client_id and select scopes.
     kind: portal
+    role: skip                                        # auth-gated portal; 403 to anonymous requests — don't liveness-check
     status: canonical
     last_verified: "2026-07-21"
   - id: sso-oauth-metadata
@@ -137,6 +175,14 @@ sources:
     kind: sde
     status: canonical
     last_verified: "2026-07-21"
+  # --- Discovery: dev-blog index. Scan for new posts; individual posts below are leaves. ---
+  - id: blog-index
+    url: https://developers.eveonline.com/blog
+    purpose: Dev-blog index (date-sorted). Discovery root — scan for new ESI-relevant posts not yet listed here.
+    kind: index
+    role: discovery
+    status: canonical
+    last_verified: "2026-07-21"
   - id: blog-compat-date
     url: https://developers.eveonline.com/blog/changing-versions-v42-was-getting-out-of-hand
     purpose: Dev blog announcing the compatibility-date rollout.
@@ -152,6 +198,31 @@ sources:
   - id: blog-sde-rework
     url: https://developers.eveonline.com/blog/reworking-the-sde-a-fresh-start-for-static-data
     purpose: Dev blog on the SDE rework (old S3 export layout is superseded).
+    kind: dev-blog
+    status: reference
+    last_verified: "2026-07-21"
+  # --- Protocol/spec dev-blogs (per meta.discovery_scope). Endpoint/feature posts are deliberately excluded. ---
+  - id: blog-goodbye-swagger
+    url: https://developers.eveonline.com/blog/goodbye-swagger-removing-the-last-remnants
+    purpose: Dev blog fixing the Swagger 2.0 removal date — /latest/swagger.json and /_latest/swagger.json 404 from 2026-08-11.
+    kind: dev-blog
+    status: reference
+    last_verified: "2026-07-21"
+  - id: blog-legacy-routes-removed
+    url: https://developers.eveonline.com/blog/spring-cleaning-legacy-routes-removed-24-march-2026
+    purpose: Dev blog on the 2026-03-24 removal of /status.json, /diff, /versions, /headers, and legacy meta-spec variants.
+    kind: dev-blog
+    status: reference
+    last_verified: "2026-07-21"
+  - id: blog-market-orders-rate-limit
+    url: https://developers.eveonline.com/blog/market-orders-rate-limit-rolls-out-on-february-24-2026
+    purpose: Dev blog on the token-bucket rate limit rolling out to /markets/{region_id}/orders (2026-02-24).
+    kind: dev-blog
+    status: reference
+    last_verified: "2026-07-21"
+  - id: blog-smarter-caching
+    url: https://developers.eveonline.com/blog/smarter-caching-when-events-drive-invalidation
+    purpose: Dev blog on event-driven cache invalidation, supplementing the Expires/ETag/Last-Modified caching model.
     kind: dev-blog
     status: reference
     last_verified: "2026-07-21"
