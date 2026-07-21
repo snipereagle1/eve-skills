@@ -7,7 +7,7 @@ A monorepo of installable [agent skills](https://docs.claude.com/en/docs/claude-
 | Skill | Covers | Status |
 |-------|--------|--------|
 | [`esi`](./skills/esi) | Consuming the **ESI** HTTP API correctly — auth/scopes, the error budget (420/429), caching (ETag/Expires), pagination, compat-date versioning, and when to reach for the SDE instead. | Ready |
-| `sde` | The **Static Data Export** — the offline dataset of static game data. | Planned |
+| [`sde`](./skills/sde) | Reading the **Static Data Export** — the offline dataset of static game data. Makes it legible: the domain map (~80 datasets + join keys), the build-number sync model, the JSONL `_key`/`_value` + localized-name encodings, traps, and recipes. | Ready |
 
 ## Installing a skill
 
@@ -35,23 +35,24 @@ The `esi` skill is **model-invoked**: once installed it triggers on its own the 
 ├── CONTEXT-MAP.md              # the bounded contexts and the language they share
 ├── README.md
 └── skills/
-    └── esi/                    # ← the installable skill
-        ├── SKILL.md            # the discipline (the only file loaded at runtime)
-        ├── manifest.yaml       # every canonical URL + volatile fact (source of truth)
-        ├── CONTEXT.md          # ESI glossary (bounded context)
-        ├── references/
-        │   ├── traps.md        # spec-lies-to-you pitfalls, loaded on demand
-        │   └── recipes.md      # multi-step task walkthroughs, loaded on demand
-        └── docs/
-            ├── adr/            # decisions specific to this skill
-            └── research-notes.md   # primary-source verification trail
+    ├── esi/                    # ← an installable skill (each skill is one)
+    │   ├── SKILL.md            # the discipline (the only file loaded at runtime)
+    │   ├── manifest.yaml       # every canonical URL + volatile fact (source of truth)
+    │   ├── CONTEXT.md          # ESI glossary (bounded context)
+    │   ├── references/
+    │   │   ├── traps.md        # spec-lies-to-you pitfalls, loaded on demand
+    │   │   └── recipes.md      # multi-step task walkthroughs, loaded on demand
+    │   └── docs/
+    │       ├── adr/            # decisions specific to this skill
+    │       └── research-notes.md   # primary-source verification trail
+    └── sde/                    # same shape; + references/datasets.md (the domain map)
 ```
 
 ## Keeping a skill current
 
 ESI changes under you (CCP shipped compat-date versioning, Swagger→OpenAPI, the SDE rework, and a new rate limiter — see [`skills/esi/docs/adr/0001`](./skills/esi/docs/adr/0001-currency-via-compat-date-and-manifest.md)). The design absorbs this: `SKILL.md` states only rot-resistant principles, and every volatile fact lives in `manifest.yaml`.
 
-To re-verify a skill, walk its `manifest.yaml`: refetch each `url`, confirm it still says what the entry claims, and bump `last_verified` (and `verified_compat_date` if ESI's accepted compat dates changed). Entries marked `status: legacy` are kept only for people upgrading old apps.
+To re-verify a skill, walk its `manifest.yaml`: refetch each `url`, confirm it still says what the entry claims, and bump `last_verified`. For `esi`, also update `verified_compat_date` if ESI's accepted compat dates changed; for `sde`, update `build` from `latest.jsonl` when a new Static Data Export build ships (the SDE's version anchor is a build number — see [`skills/sde/docs/adr/0001`](./skills/sde/docs/adr/0001-currency-via-build-number-and-manifest.md)). Entries marked `status: legacy` are kept only for people upgrading old apps.
 
 ## Design provenance
 

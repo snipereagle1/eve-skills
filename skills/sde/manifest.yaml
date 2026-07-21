@@ -1,0 +1,116 @@
+# Documentation manifest for the SDE skill.
+#
+# Single source of truth for every canonical URL and volatile fact the skill
+# references. SKILL.md stays evergreen; anything that changes when CCP ships a
+# new SDE build lives here.
+#
+# MAINTENANCE: to re-verify, walk `sources`, refetch each `url`, confirm it still
+# says what the entry claims, and update `last_verified`. Update `build` from
+# `latest.jsonl` when a new SDE build ships. `status: legacy` entries are kept
+# only for people porting pre-2025 code.
+
+meta:
+  sde_base_url: https://developers.eveonline.com/static-data/
+  # The SDE is a versioned snapshot: its version anchor is a BUILD NUMBER (not a
+  # date/route version). The current build is read from latest.jsonl below.
+  build: 3441022                                    # data build at last_verified
+  build_release_date: "2026-07-21T11:06:27Z"
+  schema_build: 3407448                             # schema-changelog trails the data build
+  schema_release_date: "2026-06-25"
+  format_default: jsonl                             # prefer JSON Lines; YAML is the alternative
+  dataset_count: 79                                 # .jsonl files in build 3441022
+  last_verified: "2026-07-21"
+
+# Volatile format/protocol facts the discipline leans on. Re-verify against the
+# docs + a fresh download.
+protocol:
+  formats:
+    jsonl: {suffix: -jsonl.zip, streamable: true, note: "one JSON object per line; default"}
+    yaml:  {suffix: -yaml.zip, native_int_keys: true, note: "whole-file load; heavy on mapMoons/types"}
+  encodings:
+    integer_keys: _key                              # every record's numeric id
+    nested_integer_map: [_key, _value]              # nested int-keyed maps -> array of {_key,_value}
+    localized_name: {shape: '{"en":..,"de":..}', fallback: en,
+                     not_localized: [dogmaAttributes, dogmaEffects],   # plain-string names
+                     absent: [npcStations]}                            # no name field
+  caching:
+    headers: [ETag, Last-Modified]                  # all resources support both
+    build_pointer_cache: max-age=300                # latest.jsonl is cached 5 min
+    sync_rule: >-
+      Read buildNumber from latest.jsonl (or HEAD the latest-*.zip shorthand and
+      read the 302 redirect target, which contains the build number). Only
+      download + re-index when the build number changes.
+  skill_prereq_attributes:                          # dogma attrs, not a field (see traps)
+    required_skill: [182, 183, 184]
+    required_level: [277, 278, 1285]
+    skill_rank: 275
+    sp_formula: "R * 250 * sqrt(32)^(L-1)"          # SP for level L at rank R
+
+sources:
+  - id: sde-docs
+    url: https://developers.eveonline.com/docs/services/static-data/
+    purpose: SDE overview — formats, download shorthands, build/versioning, caching, changes feed.
+    kind: docs
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: static-data-portal
+    url: https://developers.eveonline.com/static-data
+    purpose: SDE landing page (also links community-provided schemas and alternative formats).
+    kind: portal
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: build-pointer
+    url: https://developers.eveonline.com/static-data/tranquility/latest.jsonl
+    purpose: Current build pointer — record {"_key":"sde","buildNumber":N,"releaseDate":...}. The version anchor.
+    kind: pointer
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: sde-latest-jsonl
+    url: https://developers.eveonline.com/static-data/eve-online-static-data-latest-jsonl.zip
+    purpose: Latest SDE, JSON Lines (default format). 302-redirects to the immutable build-numbered zip.
+    kind: download
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: sde-latest-yaml
+    url: https://developers.eveonline.com/static-data/eve-online-static-data-latest-yaml.zip
+    purpose: Latest SDE, YAML (native int keys; whole-file load, heavy on large datasets).
+    kind: download
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: sde-build-numbered
+    url: https://developers.eveonline.com/static-data/tranquility/eve-online-static-data-3441022-jsonl.zip
+    purpose: Immutable build-numbered download (redirect target of the shorthand). Example for build 3441022.
+    kind: download
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: schema-changelog
+    url: https://developers.eveonline.com/static-data/tranquility/schema-changelog.yaml
+    purpose: Official per-build schema changelog. Source of truth for field-level changes (the skill never duplicates it).
+    kind: schema
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: changes-feed
+    url: https://developers.eveonline.com/static-data/tranquility/changes/3441022.jsonl
+    purpose: Per-build data changes feed (`changes/<build>.jsonl`), for diffing between builds.
+    kind: pointer
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: blog-sde-rework
+    url: https://developers.eveonline.com/blog/reworking-the-sde-a-fresh-start-for-static-data
+    purpose: Dev blog on the 2025 SDE rework — the migration reference for porting old code (folders->map*, nameID->name, splits).
+    kind: dev-blog
+    status: reference
+    last_verified: "2026-07-21"
+  - id: sde-mcp
+    url: https://github.com/snipereagle1/eve-online-sde-mcp
+    purpose: Optional dev-time MCP server that indexes the SDE and answers by ID/name. Not a runtime dependency.
+    kind: tool
+    status: optional
+    last_verified: "2026-07-21"
+  # --- Legacy: the pre-2025 SDE. Kept only for upgraders; superseded by the above. ---
+  - id: sde-legacy-s3
+    url: https://eve-static-data-export.s3-eu-west-1.amazonaws.com/tranquility/sde.zip
+    purpose: Old S3 SDE export (bsd/ + fsd/ + universe/ folders, per-file YAMLs, nameID fields). Removed by the rework — do not target.
+    kind: download
+    status: legacy
+    last_verified: "2026-07-21"
