@@ -8,6 +8,16 @@
 # says what the entry claims, and update `last_verified`. Update `build` from
 # `latest.jsonl` when a new SDE build ships. `status: legacy` entries are kept
 # only for people porting pre-2025 code.
+#
+# AUTOMATED REFRESH: `/refresh-sde-manifest` launches the `manifest-refresher`
+# subagent (report-only). It crawls `role: discovery` sources for new builds /
+# posts, checks `role: anchor` sources against the live value, liveness-checks
+# the rest, and prints proposed edits. It never writes this file — you apply what
+# it proposes.
+#
+# SOURCE ROLES (agent hints; a source with no `role:` is a leaf = liveness only):
+#   role: anchor    -> live value must match a meta field (build number)
+#   role: discovery -> crawl this index/feed for entries not yet listed below
 
 meta:
   sde_base_url: https://developers.eveonline.com/static-data/
@@ -18,7 +28,11 @@ meta:
   schema_build: 3407448                             # schema-changelog trails the data build
   schema_release_date: "2026-06-25"
   format_default: jsonl                             # prefer JSON Lines; YAML is the alternative
-  dataset_count: 79                                 # .jsonl files in build 3441022
+  # dataset_count is intentionally NOT tracked here. It IS live-verifiable — but
+  # only by downloading + extracting the SDE zip and counting .jsonl files, which
+  # we won't make every refresh pay for (speed over effort; the refresh agent is
+  # curl-only by design). Prose uses "~80"; exact counts are build-stamped in
+  # references/datasets.md and docs/research-notes.md (79 as of build 3441022).
   last_verified: "2026-07-21"
 
 # Volatile format/protocol facts the discipline leans on. Re-verify against the
@@ -63,6 +77,7 @@ sources:
     url: https://developers.eveonline.com/static-data/tranquility/latest.jsonl
     purpose: Current build pointer — record {"_key":"sde","buildNumber":N,"releaseDate":...}. The version anchor.
     kind: pointer
+    role: anchor                                    # buildNumber -> meta.build
     status: canonical
     last_verified: "2026-07-21"
   - id: sde-latest-jsonl
@@ -87,12 +102,21 @@ sources:
     url: https://developers.eveonline.com/static-data/tranquility/schema-changelog.yaml
     purpose: Official per-build schema changelog. Source of truth for field-level changes (the skill never duplicates it).
     kind: schema
+    role: discovery                                 # new build entries appear here; also the source for meta.schema_build
     status: canonical
     last_verified: "2026-07-21"
   - id: changes-feed
     url: https://developers.eveonline.com/static-data/tranquility/changes/3441022.jsonl
     purpose: Per-build data changes feed (`changes/<build>.jsonl`), for diffing between builds.
     kind: pointer
+    status: canonical
+    last_verified: "2026-07-21"
+  # --- Discovery: dev-blog index. Scan for new static-data posts; the post below is a leaf. ---
+  - id: blog-index
+    url: https://developers.eveonline.com/blog
+    purpose: Dev-blog index (date-sorted). Discovery root — scan for new static-data/SDE-relevant posts not yet listed here.
+    kind: index
+    role: discovery
     status: canonical
     last_verified: "2026-07-21"
   - id: blog-sde-rework
