@@ -1,0 +1,157 @@
+# Documentation manifest for the ESI skill.
+#
+# Single source of truth for every canonical URL, header, and volatile fact the
+# skill references. The SKILL.md body stays evergreen; anything that can change
+# when CCP ships an ESI update lives here.
+#
+# MAINTENANCE: to re-verify the skill, walk `sources`, refetch each `url`, and
+# update `last_verified` (and `verified_compat_date` if the spec's accepted
+# compat dates changed). `status: legacy` entries are kept only for upgraders.
+
+meta:
+  esi_base_url: https://esi.evetech.net
+  # ESI versions the whole application against a date (not per-route /v1 numbers).
+  compat_date_header: X-Compatibility-Date          # or `compatibility_date` query param
+  verified_compat_date: "2020-01-01"                # only value in the live spec enum at last_verified
+  last_verified: "2026-07-21"
+
+# Volatile protocol facts the discipline leans on. Header names are semi-stable;
+# re-verify against the OpenAPI spec + best-practices docs below.
+protocol:
+  caching_headers: [Expires, ETag, Last-Modified]
+  conditional_request_header: If-None-Match         # -> 304 Not Modified
+  error_limit:
+    legacy:                                         # per-route: this OR token_bucket
+      status: 420
+      window_seconds: 60
+      max_errors: 100
+      headers: [X-ESI-Error-Limit-Remain, X-ESI-Error-Limit-Reset]
+    token_bucket:                                   # newer per-group system
+      status: 429
+      retry_header: Retry-After
+      info_headers: [X-Ratelimit-Group, X-Ratelimit-Limit, X-Ratelimit-Remaining, X-Ratelimit-Used]
+  pagination:
+    x_pages: {page_header: X-Pages, query_param: page, first_page: 1}
+    cursor: {query_params: [limit, before, after], tokens: opaque}
+  tenant:
+    canonical_header: X-Tenant                      # default tranquility
+    legacy_query_param: datasource                  # tranquility only; singularity removed
+  user_agent:
+    headers: [User-Agent, X-User-Agent]             # fallback query param: user_agent
+    include: [app-name, app-version, contact-email]
+  auth:
+    access_token_ttl_seconds: 1200                  # ~20 min; inferred from token response, not printed on portal
+    refresh_token: per-character
+    scope_format: space-delimited
+    jwt_issuer: [login.eveonline.com, https://login.eveonline.com]
+    jwt_audience_contains: ["<client_id>", "EVE Online"]
+
+sources:
+  - id: openapi-spec
+    url: https://esi.evetech.net/meta/openapi.json
+    purpose: Canonical machine-readable spec (OpenAPI 3.1). Source of truth for every endpoint's shape.
+    kind: spec
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: openapi-spec-30
+    url: https://esi.evetech.net/meta/openapi-3.0.json
+    purpose: Same spec, OpenAPI 3.0 variant for tooling that lacks 3.1 support.
+    kind: spec
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: swagger-spec-legacy
+    url: https://esi.evetech.net/latest/swagger.json
+    purpose: Legacy Swagger 2.0 spec (route-versioned). Frozen; slated for removal. Upgraders only.
+    kind: spec
+    status: legacy
+    last_verified: "2026-07-21"
+  - id: api-explorer
+    url: https://developers.eveonline.com/api-explorer
+    purpose: Interactive endpoint explorer (replaces the old esi.evetech.net/ui/ Swagger UI).
+    kind: portal
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: esi-overview
+    url: https://developers.eveonline.com/docs/services/esi/overview/
+    purpose: ESI overview — compatibility-date model and base concepts.
+    kind: portal
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: best-practices
+    url: https://developers.eveonline.com/docs/services/esi/best-practices/
+    purpose: Error-limit headers, caching, and User-Agent etiquette.
+    kind: portal
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: rate-limiting
+    url: https://developers.eveonline.com/docs/services/esi/rate-limiting/
+    purpose: New token-bucket rate limit (429) and legacy 420 error limit.
+    kind: portal
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: pagination-x-pages
+    url: https://developers.eveonline.com/docs/services/esi/pagination/x-pages/
+    purpose: X-Pages pagination scheme.
+    kind: portal
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: pagination-cursor
+    url: https://developers.eveonline.com/docs/services/esi/pagination/cursor-based/
+    purpose: Cursor pagination (limit / before / after).
+    kind: portal
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: sso-docs
+    url: https://developers.eveonline.com/docs/services/sso/
+    purpose: SSO / OAuth2 conceptual docs and JWT validation (the handshake the skill defers to).
+    kind: sso-docs
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: app-registration
+    url: https://developers.eveonline.com/applications
+    purpose: Register an application to obtain a client_id and select scopes.
+    kind: portal
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: sso-oauth-metadata
+    url: https://login.eveonline.com/.well-known/oauth-authorization-server
+    purpose: SSO OAuth metadata / JWKS discovery for validating tokens.
+    kind: sso-docs
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: sde-docs
+    url: https://developers.eveonline.com/docs/services/static-data/
+    purpose: Static Data Export docs and download shorthands. Static game data belongs here, not ESI.
+    kind: sde
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: sde-latest-jsonl
+    url: https://developers.eveonline.com/static-data/eve-online-static-data-latest-jsonl.zip
+    purpose: Latest SDE, JSON Lines (rebuilt each Tranquility deploy; supports ETag/Last-Modified).
+    kind: sde
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: sde-latest-yaml
+    url: https://developers.eveonline.com/static-data/eve-online-static-data-latest-yaml.zip
+    purpose: Latest SDE, YAML.
+    kind: sde
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: blog-compat-date
+    url: https://developers.eveonline.com/blog/changing-versions-v42-was-getting-out-of-hand
+    purpose: Dev blog announcing the compatibility-date rollout.
+    kind: dev-blog
+    status: reference
+    last_verified: "2026-07-21"
+  - id: blog-openapi
+    url: https://developers.eveonline.com/blog/changing-specs-from-swagger-to-openapi
+    purpose: Dev blog on the Swagger 2.0 -> OpenAPI migration.
+    kind: dev-blog
+    status: reference
+    last_verified: "2026-07-21"
+  - id: blog-sde-rework
+    url: https://developers.eveonline.com/blog/reworking-the-sde-a-fresh-start-for-static-data
+    purpose: Dev blog on the SDE rework (old S3 export layout is superseded).
+    kind: dev-blog
+    status: reference
+    last_verified: "2026-07-21"
