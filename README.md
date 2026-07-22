@@ -27,7 +27,7 @@ ln -s "$(pwd)/skills/esi" ~/.claude/skills/esi
 
 Only the skill directory ships. The glossary, ADRs, and research notes inside it are documentation for maintainers — `SKILL.md` never loads them at runtime, so they add zero context cost when the skill fires.
 
-The `esi` skill is **model-invoked**: once installed it triggers on its own the moment an agent works against ESI. Nothing to type.
+Every skill is **model-invoked**: once installed it triggers on its own the moment an agent works against the API it covers. Nothing to type.
 
 ## Repo layout
 
@@ -36,25 +36,32 @@ The `esi` skill is **model-invoked**: once installed it triggers on its own the 
 ├── CONTEXT-MAP.md              # the bounded contexts and the language they share
 ├── README.md
 └── skills/
-    ├── esi/                    # ← an installable skill (each skill is one)
-    │   ├── SKILL.md            # the discipline (the only file loaded at runtime)
-    │   ├── manifest.yaml       # every canonical URL + volatile fact (source of truth)
-    │   ├── CONTEXT.md          # ESI glossary (bounded context)
-    │   ├── references/
-    │   │   ├── traps.md        # spec-lies-to-you pitfalls, loaded on demand
-    │   │   └── recipes.md      # multi-step task walkthroughs, loaded on demand
-    │   └── docs/
-    │       ├── adr/            # decisions specific to this skill
-    │       └── research-notes.md   # primary-source verification trail
-    └── sde/                    # same shape; + references/datasets.md (the domain map)
+    ├── esi/                    # each subdirectory is one installable skill
+    ├── sde/
+    └── sde-vs-esi/
+```
+
+Every skill follows the same shape — the files below are the anatomy, not an exhaustive listing (a skill adds reference files as its domain needs them):
+
+```
+<skill>/
+├── SKILL.md            # the discipline (the only file loaded at runtime)
+├── manifest.yaml       # every canonical URL + volatile fact (source of truth)
+├── CONTEXT.md          # the skill's glossary (its bounded context)
+├── references/         # traps, recipes, domain maps — loaded on demand, never at runtime
+└── docs/
+    ├── adr/            # decisions specific to this skill
+    └── research-notes.md   # primary-source verification trail
 ```
 
 ## Keeping a skill current
 
 ESI changes under you (CCP shipped compat-date versioning, Swagger→OpenAPI, the SDE rework, and a new rate limiter — see [`skills/esi/docs/adr/0001`](./skills/esi/docs/adr/0001-currency-via-compat-date-and-manifest.md)). The design absorbs this: `SKILL.md` states only rot-resistant principles, and every volatile fact lives in `manifest.yaml`.
 
-To re-verify a skill, walk its `manifest.yaml`: refetch each `url`, confirm it still says what the entry claims, and bump `last_verified`. For `esi`, also update `verified_compat_date` if ESI's accepted compat dates changed; for `sde`, update `build` from `latest.jsonl` when a new Static Data Export build ships (the SDE's version anchor is a build number — see [`skills/sde/docs/adr/0001`](./skills/sde/docs/adr/0001-currency-via-build-number-and-manifest.md)). Entries marked `status: legacy` are kept only for people upgrading old apps.
+Each skill has a report-only refresh command — `/refresh-esi-manifest`, `/refresh-sde-manifest`, `/refresh-sde-vs-esi-manifest` — that launches the `manifest-refresher` agent to crawl the discovery sources, check anchors against their live values, and print a drift report with ready-to-paste edits. It never writes the manifest; you apply what it proposes. To re-verify by hand, walk the `manifest.yaml`: refetch each `url`, confirm it still says what the entry claims, and bump `last_verified`.
+
+Each skill's version anchor is its own: `esi` tracks `verified_compat_date` (ESI's accepted compat dates); `sde` tracks `build` from `latest.jsonl` when a new Static Data Export ships (see [`skills/sde/docs/adr/0001`](./skills/sde/docs/adr/0001-currency-via-build-number-and-manifest.md)); `sde-vs-esi` syncs the sibling anchors and re-checks the overlap set. Entries marked `status: legacy` are kept only for people upgrading old apps.
 
 ## Design provenance
 
-This repo was designed decision-by-decision (reference-not-workflow, distributable, model-invoked, discipline + traps + recipes, currency-via-manifest) and grounded against live ESI docs before a line was written. The vocabulary is in `CONTEXT-MAP.md` and each skill's `CONTEXT.md`; the load-bearing decisions are in each skill's `docs/adr/`.
+This repo was designed decision-by-decision (reference-not-workflow, distributable, model-invoked, discipline + traps + recipes, currency-via-manifest, and a front-door skill that routes between sources before either siblings fires) and grounded against live ESI docs before a line was written. The vocabulary is in `CONTEXT-MAP.md` and each skill's `CONTEXT.md`; the load-bearing decisions are in each skill's `docs/adr/`.
