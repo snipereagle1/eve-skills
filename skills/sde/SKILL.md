@@ -1,6 +1,6 @@
 ---
 name: sde
-description: How to read EVE Online's Static Data Export (SDE) — the offline dataset of static game data. Use when working with EVE game data by ID or name (types, groups, categories, dogma attributes/effects, blueprints, the solar-system/region map, market groups, factions, NPC stations), resolving IDs↔names offline, downloading/syncing the SDE, or decoding its JSON Lines format.
+description: How to read EVE Online's Static Data Export (SDE) — the offline dataset of static game data. Use when working with EVE game data by ID or name (types, groups, categories, dogma attributes/effects, blueprints, the solar-system/region map, market groups, factions, NPC stations), resolving IDs↔names offline, downloading/syncing the SDE, or decoding its JSON Lines format. If you're unsure whether the SDE or ESI is the right source for a piece of data, see the `sde-vs-esi` skill first.
 ---
 
 The **Static Data Export (SDE)** is EVE Online's offline dataset of everything that only changes on a game patch — item types, dogma attributes, the universe map, blueprints, market groups, factions. Agents avoid it because it looks opaque: dozens of files, numeric IDs everywhere, no friendly API. It isn't opaque once you have the map. This skill *is* that map — what the SDE contains, how the pieces join, and how to read it correctly. It never duplicates the field-level schema: for exact record fields, read the live data or CCP's `schema-changelog.yaml` (see [`manifest.yaml`](manifest.yaml)).

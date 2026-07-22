@@ -1,0 +1,118 @@
+# Documentation manifest for the sde-vs-esi skill.
+#
+# This skill owns no primary facts of its own — it routes between two sources
+# the sibling `esi` and `sde` skills each document. Its ONE volatile external
+# fact is the `overlap_set`: the ESI routes that duplicate SDE datasets, which
+# is where the routing rule is an actual decision rather than a forced move.
+#
+# DUAL ANCHOR. A routing recommendation is only valid relative to a known state
+# of BOTH sources: an ESI compat date AND an SDE build. If ESI adds/removes an
+# overlapping route, or the SDE reshapes a dataset, an entry here can move. So
+# this manifest pins both `verified_compat_date` (mirrors skills/esi) and `build`
+# (mirrors skills/sde). Re-verify against whichever sibling last bumped.
+#   - The overlap ESI routes are read from the ESI OpenAPI spec (esi-openapi).
+#   - The SDE dataset names are the sibling `sde` skill's domain map.
+#
+# MAINTENANCE: walk `sources` (liveness), then walk `overlap_set` and confirm
+# each `esi_route` still exists in the OpenAPI spec and each `sde_dataset` still
+# exists in the sibling `sde` skill's references/datasets.md. Update
+# `last_verified`; bump `verified_compat_date` / `build` to match the siblings.
+# There is no dedicated refresh command for this skill yet — refresh it whenever
+# `/refresh-esi-manifest` or `/refresh-sde-manifest` reports a change that
+# touches the overlap.
+
+meta:
+  # This skill is valid only relative to a known state of BOTH sources.
+  verified_compat_date: "2026-07-21"                # mirrors skills/esi manifest (ESI anchor)
+  build: 3441022                                    # mirrors skills/sde manifest (SDE anchor)
+  last_verified: "2026-07-21"
+  # What this manifest tracks — nothing else belongs here.
+  discovery_scope: >-
+    The overlap set only: ESI routes that duplicate an SDE dataset (the reference
+    data both sources carry). NOT ESI's live/character/market routes (those are
+    ESI-only, documented in skills/esi) and NOT the SDE's static-only datasets
+    (SDE-only, documented in skills/sde). A route is in the overlap iff the same
+    record is answerable offline from the SDE.
+
+# The decision surface. Each row is a place where BOTH sources answer, so the
+# routing rule is advisory (integration-state-dependent), not forced. ESI routes
+# verified present in the OpenAPI spec; SDE datasets are the sibling skill's names.
+# `universe-names` / `universe-ids` are the bulk resolvers to prefer over per-ID
+# loops when the SDE isn't integrated.
+overlap_set:
+  - concept: type names & classification
+    esi_route: [GET /universe/types, "GET /universe/types/{type_id}"]
+    sde_dataset: [types, groups, categories]
+    note: "types is the spine; groupID -> groups -> categoryID. Also GET /universe/groups[/{id}], /universe/categories[/{id}]."
+  - concept: solar-system / constellation / region map
+    esi_route: ["GET /universe/systems[/{system_id}]", "GET /universe/constellations[/{constellation_id}]", "GET /universe/regions[/{region_id}]"]
+    sde_dataset: [mapSolarSystems, mapConstellations, mapRegions]
+    note: "Names + hierarchy overlap. The raw stargate GRAPH (mapStargates edges) is richer in the SDE; ESI's /universe/stargates/{id} is per-gate only."
+  - concept: celestials & stargates (per-object)
+    esi_route: ["GET /universe/stargates/{stargate_id}", "GET /universe/planets/{planet_id}", "GET /universe/moons/{moon_id}", "GET /universe/stars/{star_id}", "GET /universe/asteroid_belts/{asteroid_belt_id}"]
+    sde_dataset: [mapStargates, mapPlanets, mapMoons, mapStars, mapAsteroidBelts]
+    note: "Per-object lookup overlaps; bulk/adjacency work is far cheaper from the SDE."
+  - concept: NPC stations
+    esi_route: "GET /universe/stations/{station_id}"
+    sde_dataset: [npcStations, stationOperations]
+    note: "NPC stations only. PLAYER structures are ESI-only (/universe/structures) — not in the overlap. SDE station name is derived via operationID -> stationOperations."
+  - concept: market group tree
+    esi_route: ["GET /markets/groups", "GET /markets/groups/{market_group_id}"]
+    sde_dataset: [marketGroups]
+    note: "Browse taxonomy (parentGroupID). Distinct from the mechanical groups/categories tree. LIVE prices/orders are ESI-only, NOT overlap."
+  - concept: dogma attribute & effect definitions
+    esi_route: ["GET /dogma/attributes[/{attribute_id}]", "GET /dogma/effects[/{effect_id}]"]
+    sde_dataset: [dogmaAttributes, dogmaEffects, typeDogma]
+    note: "Definitions of what an attribute/effect IS. Per-type values live in typeDogma (SDE) or /dogma/dynamic (ESI, for mutated modules)."
+  - concept: factions / races / bloodlines
+    esi_route: ["GET /universe/factions", "GET /universe/races", "GET /universe/bloodlines"]
+    sde_dataset: [factions, races, bloodlines]
+    note: "Static lore/classification data."
+  - concept: planetary schematics
+    esi_route: "GET /universe/schematics/{schematic_id}"
+    sde_dataset: [planetSchematics]
+    note: "PI schematics; static."
+  - concept: graphics / icons
+    esi_route: ["GET /universe/graphics", "GET /universe/graphics/{graphic_id}"]
+    sde_dataset: [graphics, icons]
+    note: "Asset references; static."
+
+# Bulk ID resolvers on the ESI side — the right fallback when the SDE isn't
+# integrated and you must name IDs at runtime. Prefer these over per-ID GET loops.
+resolvers:
+  - id: universe-names
+    route: POST /universe/names
+    purpose: Resolve up to 1000 mixed IDs (types, systems, stations, characters, corps, alliances...) to names in one call. No scope. Covers IDs the SDE lacks (characters/corps/alliances).
+    max_ids: 1000
+  - id: universe-ids
+    route: POST /universe/ids
+    purpose: The inverse — resolve names to IDs (bulk, mixed categories). No scope.
+
+sources:
+  - id: esi-openapi
+    url: https://esi.evetech.net/meta/openapi.json
+    purpose: Canonical ESI spec. Source of truth for which overlap routes exist. Walk this to re-verify every `overlap_set[].esi_route`.
+    kind: spec
+    role: anchor                                    # overlap_set esi_route entries must exist here
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: sde-datasets
+    url: https://developers.eveonline.com/docs/services/static-data/
+    purpose: SDE overview. The `overlap_set[].sde_dataset` names are the sibling `sde` skill's domain map; this is their upstream.
+    kind: docs
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: sibling-esi
+    url: ../esi/manifest.yaml
+    purpose: The ESI skill's manifest. `verified_compat_date` here mirrors that file — the ESI half of this skill's dual anchor.
+    kind: sibling
+    role: skip                                      # local file, not a fetchable URL
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: sibling-sde
+    url: ../sde/manifest.yaml
+    purpose: The SDE skill's manifest. `build` here mirrors that file — the SDE half of this skill's dual anchor.
+    kind: sibling
+    role: skip                                      # local file, not a fetchable URL
+    status: canonical
+    last_verified: "2026-07-21"

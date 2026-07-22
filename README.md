@@ -8,6 +8,7 @@ A monorepo of installable [agent skills](https://docs.claude.com/en/docs/claude-
 |-------|--------|--------|
 | [`esi`](./skills/esi) | Consuming the **ESI** HTTP API correctly — auth/scopes, the error budget (420/429), caching (ETag/Expires), pagination, compat-date versioning, and when to reach for the SDE instead. | Ready |
 | [`sde`](./skills/sde) | Reading the **Static Data Export** — the offline dataset of static game data. Makes it legible: the domain map (~80 datasets + join keys), the build-number sync model, the JSONL `_key`/`_value` + localized-name encodings, traps, and recipes. | Ready |
+| [`sde-vs-esi`](./skills/sde-vs-esi) | Deciding **which source** answers a question — ESI, the SDE, or both — and how to **join** them. The front door: routing is forced where data is single-sourced, advisory in the overlap (keyed on whether you've already integrated the SDE), plus ID→name reconciliation. | Ready |
 
 ## Installing a skill
 

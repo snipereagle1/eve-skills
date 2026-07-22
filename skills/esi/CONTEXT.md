@@ -24,6 +24,6 @@ _Avoid_: sources list, links, bibliography
 ESI's compatibility-date versioning mechanism, used as the skill's version anchor — the skill pins what it verified against a compat date rather than to volatile route versions.
 _Avoid_: version, api version, route version
 
-**SDE boundary**:
-The first-class best practice of choosing datasource by data kind — static/reference data (type names, topology, dogma) belongs to the Static Data Export; dynamic/character/live data belongs to ESI. The skill owns the boundary, not the SDE's contents.
+**SDE boundary** *(shared across the `esi`, `sde`, and `sde-vs-esi` contexts)*:
+The first-class best practice of choosing datasource by data kind — static/reference data (type names, topology, dogma) belongs to the Static Data Export; dynamic/character/live data belongs to ESI. This skill states the boundary from ESI's side and points at [`sde-vs-esi`](../sde-vs-esi/CONTEXT.md), which owns the full routing decision and the join. The skill owns the boundary, not the SDE's contents. A change to the boundary is a change to all three glossaries.
 _Avoid_: SDE integration, static data handling

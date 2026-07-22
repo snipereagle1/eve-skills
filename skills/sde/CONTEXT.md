@@ -1,6 +1,6 @@
 # SDE Skill
 
-A distributable, model-invoked reference skill that makes EVE Online's Static Data Export **legible** — what it contains, how the datasets join, and how to read its format. It is a knowledge artifact, not a procedure, and never duplicates the field-level schema (that lives in CCP's `schema-changelog.yaml` and the live data). It does **not** adjudicate SDE-vs-ESI trade-offs — that is deferred to a future `sde-vs-esi` skill.
+A distributable, model-invoked reference skill that makes EVE Online's Static Data Export **legible** — what it contains, how the datasets join, and how to read its format. It is a knowledge artifact, not a procedure, and never duplicates the field-level schema (that lives in CCP's `schema-changelog.yaml` and the live data). It does **not** adjudicate SDE-vs-ESI trade-offs — that decision and the ESI↔SDE join are owned by the [`sde-vs-esi`](../sde-vs-esi/CONTEXT.md) skill.
 
 The domain vocabulary (Type, Group, Category, Blueprint, DogmaAttribute, SolarSystem, MarketGroup, Faction, NpcStation, …) is shared with and kept consistent with [`eve-online-sde-mcp`'s `CONTEXT.md`](https://github.com/snipereagle1/eve-online-sde-mcp) — the MCP server that indexes this same data. The terms below are the ones the *skill's design* turns on.
 
@@ -30,6 +30,6 @@ _Avoid_: workflow, tutorial, guide
 The structured `manifest.yaml` enumerating every canonical URL and volatile fact, each with `url`, `purpose`, `kind`, `status`, and `last_verified`, plus the current `build`. The single place to update when a new SDE build ships; walkable for drift-checking.
 _Avoid_: sources list, links, bibliography
 
-**SDE boundary** *(shared with the ESI context — do not expand here)*:
-The choice of datasource by data kind — static/reference data belongs to the SDE, dynamic/character/live/market data to ESI. This skill states only its own half ("the SDE is static-only; no prices, no live state"); the full trade-off analysis is deferred to the future `sde-vs-esi` skill. Kept consistent with the ESI context's definition.
+**SDE boundary** *(shared across the `esi`, `sde`, and `sde-vs-esi` contexts — do not expand here)*:
+The choice of datasource by data kind — static/reference data belongs to the SDE, dynamic/character/live/market data to ESI. This skill states only its own half ("the SDE is static-only; no prices, no live state"); the full trade-off analysis and the join are owned by the [`sde-vs-esi`](../sde-vs-esi/CONTEXT.md) skill. A change to the boundary is a change to all three glossaries.
 _Avoid_: SDE-vs-ESI, datasource selection (as this skill's topic)

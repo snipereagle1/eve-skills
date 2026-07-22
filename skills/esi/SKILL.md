@@ -1,6 +1,6 @@
 ---
 name: esi
-description: Best-practice discipline for consuming EVE Online's ESI API (esi.evetech.net) correctly. Use when building or debugging ESI calls, handling SSO auth / scopes / tokens, hitting rate or error limits (420/429), caching (ETag/Expires), paginating, choosing a compatibility date, or deciding between ESI and the SDE for game data.
+description: Best-practice discipline for consuming EVE Online's ESI API (esi.evetech.net) correctly. Use when building or debugging ESI calls, handling SSO auth / scopes / tokens, hitting rate or error limits (420/429), caching (ETag/Expires), paginating, or choosing a compatibility date. If you're unsure whether ESI or the SDE is the right source for a piece of data, see the `sde-vs-esi` skill first.
 ---
 
 **ESI** (the EVE Swagger Interface) is EVE Online's HTTP API. Agents get it wrong by default — hammering it for static data, ignoring the error budget, polling past cache timers. This skill is the discipline that prevents that. It never duplicates the spec: for any endpoint's shape, read the live OpenAPI spec (see `manifest.yaml`). The rules below are the knowledge the spec does *not* give you.
@@ -9,7 +9,7 @@ ESI is mid-migration. Everything here presents the **canonical** (current) mecha
 
 ## Reach for the SDE, not ESI, for static data
 
-The single highest-leverage rule. Data that only changes on a game patch — type names, system/region/constellation topology, dogma attributes, market groups, icons — belongs to the **Static Data Export**, not ESI. Resolving 10,000 type names by calling `/universe/types/{id}` is an error-budget-burning anti-pattern; the SDE is one download, offline, free. Rule of thumb: **static/reference → SDE; dynamic/character/live/market → ESI.** The SDE's location and format are in `manifest.yaml`.
+The single highest-leverage rule. Data that only changes on a game patch — type names, system/region/constellation topology, dogma attributes, market groups, icons — belongs to the **Static Data Export**, not ESI. Resolving 10,000 type names by calling `/universe/types/{id}` is an error-budget-burning anti-pattern; the SDE is one download, offline, free. Rule of thumb: **static/reference → SDE; dynamic/character/live/market → ESI.** The SDE's location and format are in `manifest.yaml`. When the two sources overlap and the call isn't obvious — or when you need to *join* them — the [`sde-vs-esi`](../sde-vs-esi/SKILL.md) skill owns that decision.
 
 ## Cache before you call
 
