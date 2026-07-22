@@ -67,10 +67,10 @@ overlap_set:
     esi_route: ["GET /dogma/attributes[/{attribute_id}]", "GET /dogma/effects[/{effect_id}]"]
     sde_dataset: [dogmaAttributes, dogmaEffects, typeDogma]
     note: "Definitions of what an attribute/effect IS. Per-type values live in typeDogma (SDE) or /dogma/dynamic (ESI, for mutated modules)."
-  - concept: factions / races / bloodlines
-    esi_route: ["GET /universe/factions", "GET /universe/races", "GET /universe/bloodlines"]
-    sde_dataset: [factions, races, bloodlines]
-    note: "Static lore/classification data."
+  - concept: factions / races / bloodlines / ancestries
+    esi_route: ["GET /universe/factions", "GET /universe/races", "GET /universe/bloodlines", "GET /universe/ancestries"]
+    sde_dataset: [factions, races, bloodlines, ancestries]
+    note: "Static lore/classification data (character-creation chain: race -> bloodline -> ancestry)."
   - concept: planetary schematics
     esi_route: "GET /universe/schematics/{schematic_id}"
     sde_dataset: [planetSchematics]

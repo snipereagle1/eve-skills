@@ -12,7 +12,7 @@ Pulled `https://esi.evetech.net/meta/openapi.json` (453,965 bytes, compat date `
 - `GET /universe/systems[/{system_id}]`, `/universe/constellations[/{constellation_id}]`, `/universe/regions[/{region_id}]`
 - `GET /universe/stargates/{stargate_id}`, `/universe/planets/{planet_id}`, `/universe/moons/{moon_id}`, `/universe/stars/{star_id}`, `/universe/asteroid_belts/{asteroid_belt_id}`
 - `GET /universe/stations/{station_id}` (NPC stations; player structures are `/universe/structures/{id}` — **not** overlap)
-- `GET /universe/factions`, `/universe/races`, `/universe/bloodlines`
+- `GET /universe/factions`, `/universe/races`, `/universe/bloodlines`, `/universe/ancestries`
 - `GET /universe/graphics[/{graphic_id}]`, `/universe/schematics/{schematic_id}`
 - `GET /dogma/attributes[/{attribute_id}]`, `/dogma/effects[/{effect_id}]`
 - `GET /markets/groups[/{market_group_id}]`
