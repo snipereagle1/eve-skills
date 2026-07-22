@@ -13,26 +13,29 @@
 #   - The overlap ESI routes are read from the ESI OpenAPI spec (esi-openapi).
 #   - The SDE dataset names are the sibling `sde` skill's domain map.
 #
-# MAINTENANCE: walk `sources` (liveness), then walk `overlap_set` and confirm
-# each `esi_route` still exists in the OpenAPI spec and each `sde_dataset` still
-# exists in the sibling `sde` skill's references/datasets.md. Update
-# `last_verified`; bump `verified_compat_date` / `build` to match the siblings.
-# There is no dedicated refresh command for this skill yet — refresh it whenever
-# `/refresh-esi-manifest` or `/refresh-sde-manifest` reports a change that
-# touches the overlap.
+# MAINTENANCE: `/refresh-sde-vs-esi-manifest` launches the `manifest-refresher`
+# subagent (report-only) against this file. It (1) checks each `role: mirror`
+# source — reads the sibling manifest and compares its `anchor` field to our
+# meta, flagging any sibling that bumped and we didn't; (2) walks `overlap_set` —
+# confirms each `sde_dataset` against ../sde/references/datasets.md and each
+# `esi_route` via targeted presence in the spec, and scans the `role: discovery`
+# changelog for added/removed overlap routes; (3) liveness-checks the leaves. It
+# never writes this file — you apply what it proposes. Bump `verified_compat_date`
+# / `build` to match the siblings when a mirror check reports drift.
 
 meta:
   # This skill is valid only relative to a known state of BOTH sources.
   verified_compat_date: "2026-07-21"                # mirrors skills/esi manifest (ESI anchor)
   build: 3441022                                    # mirrors skills/sde manifest (SDE anchor)
   last_verified: "2026-07-21"
-  # What this manifest tracks — nothing else belongs here.
+  # What this manifest tracks — nothing else belongs here. Used by the refresher
+  # to filter the changelog scan: only route ADD/REMOVE under these prefixes.
   discovery_scope: >-
-    The overlap set only: ESI routes that duplicate an SDE dataset (the reference
-    data both sources carry). NOT ESI's live/character/market routes (those are
-    ESI-only, documented in skills/esi) and NOT the SDE's static-only datasets
-    (SDE-only, documented in skills/sde). A route is in the overlap iff the same
-    record is answerable offline from the SDE.
+    Overlap-set changes only: routes ADDED or REMOVED under /universe, /dogma, or
+    /markets that duplicate (or would duplicate) an SDE dataset. NOT ESI's
+    live/character/market routes (ESI-only, in skills/esi) and NOT SDE-only
+    datasets (in skills/sde). A route is in the overlap iff the same record is
+    answerable offline from the SDE.
 
 # The decision surface. Each row is a place where BOTH sources answer, so the
 # routing rule is advisory (integration-state-dependent), not forced. ESI routes
@@ -91,28 +94,36 @@ resolvers:
 sources:
   - id: esi-openapi
     url: https://esi.evetech.net/meta/openapi.json
-    purpose: Canonical ESI spec. Source of truth for which overlap routes exist. Walk this to re-verify every `overlap_set[].esi_route`.
-    kind: spec
-    role: anchor                                    # overlap_set esi_route entries must exist here
+    purpose: Canonical ESI spec (the kind=spec source). The overlap walk uses it for TARGETED presence checks of each overlap_set esi_route ("are these specific paths present?" — never a full enumeration; the spec is large and truncates).
+    kind: spec                                      # leaf: liveness + targeted overlap-route presence
+    status: canonical
+    last_verified: "2026-07-21"
+  - id: esi-changelog
+    url: https://esi.evetech.net/meta/changelog
+    purpose: Machine-readable ESI changelog, keyed by compat date with is_breaking flags. Discovery signal for overlap-set drift — an added/removed /universe|/dogma|/markets route shows here (a removal is breaking). Filter with meta.discovery_scope.
+    kind: endpoint
+    role: discovery
     status: canonical
     last_verified: "2026-07-21"
   - id: sde-datasets
     url: https://developers.eveonline.com/docs/services/static-data/
-    purpose: SDE overview. The `overlap_set[].sde_dataset` names are the sibling `sde` skill's domain map; this is their upstream.
+    purpose: SDE overview (liveness only). The `overlap_set[].sde_dataset` names are confirmed against the LOCAL sibling map `../sde/references/datasets.md` (relative to this manifest), not this URL — that is the source of truth for dataset existence.
     kind: docs
     status: canonical
     last_verified: "2026-07-21"
   - id: sibling-esi
     url: ../esi/manifest.yaml
-    purpose: The ESI skill's manifest. `verified_compat_date` here mirrors that file — the ESI half of this skill's dual anchor.
+    purpose: The ESI skill's manifest — the ESI half of the dual anchor. Read it and compare its meta.verified_compat_date to this manifest's; drift = esi bumped and this didn't.
     kind: sibling
-    role: skip                                      # local file, not a fetchable URL
+    role: mirror                                    # Read this manifest; compare the `anchor` field to our meta.<anchor>
+    anchor: verified_compat_date
     status: canonical
     last_verified: "2026-07-21"
   - id: sibling-sde
     url: ../sde/manifest.yaml
-    purpose: The SDE skill's manifest. `build` here mirrors that file — the SDE half of this skill's dual anchor.
+    purpose: The SDE skill's manifest — the SDE half of the dual anchor. Read it and compare its meta.build to this manifest's; drift = sde bumped and this didn't.
     kind: sibling
-    role: skip                                      # local file, not a fetchable URL
+    role: mirror                                    # Read this manifest; compare the `anchor` field to our meta.<anchor>
+    anchor: build
     status: canonical
     last_verified: "2026-07-21"
