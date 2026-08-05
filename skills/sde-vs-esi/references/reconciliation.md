@@ -16,7 +16,7 @@ The IDs ESI returns bare, and where each resolves:
 | `market_group_id` | `marketGroups` | `GET /markets/groups/{market_group_id}` |
 | `attribute_id` / `effect_id` | `dogmaAttributes` / `dogmaEffects` | `GET /dogma/attributes/{id}` etc. |
 | `faction_id` / `race_id` / `bloodline_id` | `factions` / `races` / `bloodlines` | `GET /universe/factions` etc. |
-| `character_id` / `corporation_id` / `alliance_id` | **not in the SDE** | `POST /universe/names` (bulk, ≤1000) |
+| `character_id` / `corporation_id` / `alliance_id` | **not in the SDE** | `POST /universe/names` |
 
 Two rules make this cheap and correct:
 
