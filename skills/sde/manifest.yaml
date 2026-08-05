@@ -18,13 +18,14 @@
 # SOURCE ROLES (agent hints; a source with no `role:` is a leaf = liveness only):
 #   role: anchor    -> live value must match a meta field (build number)
 #   role: discovery -> crawl this index/feed for entries not yet listed below
+#   role: skip      -> do not fetch (templated URL / not machine-checkable)
 
 meta:
   sde_base_url: https://developers.eveonline.com/static-data/
   # The SDE is a versioned snapshot: its version anchor is a BUILD NUMBER (not a
   # date/route version). The current build is read from latest.jsonl below.
-  build: 3441022                                    # data build at last_verified
-  build_release_date: "2026-07-21T11:06:27Z"
+  build: 3457062                                    # data build at last_verified
+  build_release_date: "2026-08-05T11:06:46Z"
   schema_build: 3407448                             # schema-changelog trails the data build
   schema_release_date: "2026-06-25"
   format_default: jsonl                             # prefer JSON Lines; YAML is the alternative
@@ -33,7 +34,7 @@ meta:
   # we won't make every refresh pay for (speed over effort; the refresh agent is
   # curl-only by design). Prose uses "~80"; exact counts are build-stamped in
   # references/datasets.md and docs/research-notes.md (79 as of build 3441022).
-  last_verified: "2026-07-21"
+  last_verified: "2026-08-05"
 
 # Volatile format/protocol facts the discipline leans on. Re-verify against the
 # docs + a fresh download.
@@ -66,51 +67,52 @@ sources:
     purpose: SDE overview — formats, download shorthands, build/versioning, caching, changes feed.
     kind: docs
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: static-data-portal
     url: https://developers.eveonline.com/static-data
     purpose: SDE landing page (also links community-provided schemas and alternative formats).
     kind: portal
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: build-pointer
     url: https://developers.eveonline.com/static-data/tranquility/latest.jsonl
     purpose: Current build pointer — record {"_key":"sde","buildNumber":N,"releaseDate":...}. The version anchor.
     kind: pointer
     role: anchor                                    # buildNumber -> meta.build
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: sde-latest-jsonl
     url: https://developers.eveonline.com/static-data/eve-online-static-data-latest-jsonl.zip
     purpose: Latest SDE, JSON Lines (default format). 302-redirects to the immutable build-numbered zip.
     kind: download
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: sde-latest-yaml
     url: https://developers.eveonline.com/static-data/eve-online-static-data-latest-yaml.zip
     purpose: Latest SDE, YAML (native int keys; whole-file load, heavy on large datasets).
     kind: download
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: sde-build-numbered
-    url: https://developers.eveonline.com/static-data/tranquility/eve-online-static-data-3441022-jsonl.zip
-    purpose: Immutable build-numbered download (redirect target of the shorthand). Example for build 3441022.
+    url: https://developers.eveonline.com/static-data/tranquility/eve-online-static-data-<build>-jsonl.zip
+    purpose: Immutable build-numbered download (redirect target of the shorthand). URL shape, not a fetchable link — substitute meta.build.
     kind: download
+    role: skip                                      # templated URL; liveness is covered by sde-latest-jsonl's redirect
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: schema-changelog
     url: https://developers.eveonline.com/static-data/tranquility/schema-changelog.yaml
     purpose: Official per-build schema changelog. Source of truth for field-level changes (the skill never duplicates it).
     kind: schema
     role: discovery                                 # new build entries appear here; also the source for meta.schema_build
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: changes-feed
-    url: https://developers.eveonline.com/static-data/tranquility/changes/3441022.jsonl
+    url: https://developers.eveonline.com/static-data/tranquility/changes/3457062.jsonl
     purpose: Per-build data changes feed (`changes/<build>.jsonl`), for diffing between builds.
     kind: pointer
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   # --- Discovery: dev-blog index. Scan for new static-data posts; the post below is a leaf. ---
   - id: blog-index
     url: https://developers.eveonline.com/blog
@@ -118,23 +120,23 @@ sources:
     kind: index
     role: discovery
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: blog-sde-rework
     url: https://developers.eveonline.com/blog/reworking-the-sde-a-fresh-start-for-static-data
     purpose: Dev blog on the 2025 SDE rework — the migration reference for porting old code (folders->map*, nameID->name, splits).
     kind: dev-blog
     status: reference
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: sde-mcp
     url: https://github.com/snipereagle1/eve-online-sde-mcp
     purpose: Optional dev-time MCP server that indexes the SDE and answers by ID/name. Not a runtime dependency.
     kind: tool
     status: optional
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   # --- Legacy: the pre-2025 SDE. Kept only for upgraders; superseded by the above. ---
   - id: sde-legacy-s3
     url: https://eve-static-data-export.s3-eu-west-1.amazonaws.com/tranquility/sde.zip
     purpose: Old S3 SDE export (bsd/ + fsd/ + universe/ folders, per-file YAMLs, nameID fields). Removed by the rework — do not target.
     kind: download
     status: legacy
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
