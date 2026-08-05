@@ -29,8 +29,8 @@ meta:
   # Latest compat date the skill is verified against. ESI accepts any date in
   # GET /meta/compatibility-dates (2020-01-01 base .. latest); track the LATEST
   # (element [0]), not the base. The openapi.json enum only shows the base — ignore it.
-  verified_compat_date: "2026-07-21"                # latest per /meta/compatibility-dates
-  last_verified: "2026-07-21"
+  verified_compat_date: "2026-08-04"                # latest per /meta/compatibility-dates
+  last_verified: "2026-08-05"
   # Discovery filter for the refresh agent — what this manifest tracks:
   discovery_scope: >-
     Protocol/spec mechanics only — compat-date model, spec format, caching,
@@ -74,107 +74,107 @@ sources:
     purpose: Canonical machine-readable spec (OpenAPI 3.1). Source of truth for every endpoint's shape.
     kind: spec
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: esi-compatibility-dates
     url: https://esi.evetech.net/meta/compatibility-dates
     purpose: Canonical list of valid compat dates, newest first. Anchor — element [0] is the latest -> meta.verified_compat_date.
     kind: endpoint
     role: anchor
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: esi-changelog
     url: https://esi.evetech.net/meta/changelog
     purpose: Authoritative machine-readable API changelog, keyed by compat date; each route change flagged is_breaking. Primary protocol/spec discovery feed.
     kind: endpoint
     role: discovery
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: openapi-spec-30
     url: https://esi.evetech.net/meta/openapi-3.0.json
     purpose: Same spec, OpenAPI 3.0 variant for tooling that lacks 3.1 support.
     kind: spec
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: swagger-spec-legacy
     url: https://esi.evetech.net/latest/swagger.json
     purpose: Legacy Swagger 2.0 spec (route-versioned). Upgraders only. Removal CONFIRMED — /latest/swagger.json and /_latest/swagger.json start 404ing 2026-08-11 (see blog-goodbye-swagger).
     kind: spec
     status: sunset
     removal_date: "2026-08-11"
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: api-explorer
     url: https://developers.eveonline.com/api-explorer
     purpose: Interactive endpoint explorer (replaces the old esi.evetech.net/ui/ Swagger UI).
     kind: portal
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: esi-overview
     url: https://developers.eveonline.com/docs/services/esi/overview/
     purpose: ESI overview — compatibility-date model and base concepts.
     kind: portal
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: best-practices
     url: https://developers.eveonline.com/docs/services/esi/best-practices/
     purpose: Error-limit headers, caching, and User-Agent etiquette.
     kind: portal
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: rate-limiting
     url: https://developers.eveonline.com/docs/services/esi/rate-limiting/
     purpose: New token-bucket rate limit (429) and legacy 420 error limit.
     kind: portal
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: pagination-x-pages
     url: https://developers.eveonline.com/docs/services/esi/pagination/x-pages/
     purpose: X-Pages pagination scheme.
     kind: portal
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: pagination-cursor
     url: https://developers.eveonline.com/docs/services/esi/pagination/cursor-based/
     purpose: Cursor pagination (limit / before / after).
     kind: portal
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: sso-docs
     url: https://developers.eveonline.com/docs/services/sso/
     purpose: SSO / OAuth2 conceptual docs and JWT validation (the handshake the skill defers to).
     kind: sso-docs
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: app-registration
     url: https://developers.eveonline.com/applications
     purpose: Register an application to obtain a client_id and select scopes.
     kind: portal
     role: skip                                        # auth-gated portal; 403 to anonymous requests — don't liveness-check
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: sso-oauth-metadata
     url: https://login.eveonline.com/.well-known/oauth-authorization-server
     purpose: SSO OAuth metadata / JWKS discovery for validating tokens.
     kind: sso-docs
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: sde-docs
     url: https://developers.eveonline.com/docs/services/static-data/
     purpose: Static Data Export docs and download shorthands. Static game data belongs here, not ESI.
     kind: sde
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: sde-latest-jsonl
     url: https://developers.eveonline.com/static-data/eve-online-static-data-latest-jsonl.zip
     purpose: Latest SDE, JSON Lines (rebuilt each Tranquility deploy; supports ETag/Last-Modified).
     kind: sde
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: sde-latest-yaml
     url: https://developers.eveonline.com/static-data/eve-online-static-data-latest-yaml.zip
     purpose: Latest SDE, YAML.
     kind: sde
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   # --- Discovery: dev-blog index. Scan for new posts; individual posts below are leaves. ---
   - id: blog-index
     url: https://developers.eveonline.com/blog
@@ -182,47 +182,47 @@ sources:
     kind: index
     role: discovery
     status: canonical
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: blog-compat-date
     url: https://developers.eveonline.com/blog/changing-versions-v42-was-getting-out-of-hand
     purpose: Dev blog announcing the compatibility-date rollout.
     kind: dev-blog
     status: reference
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: blog-openapi
     url: https://developers.eveonline.com/blog/changing-specs-from-swagger-to-openapi
     purpose: Dev blog on the Swagger 2.0 -> OpenAPI migration.
     kind: dev-blog
     status: reference
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: blog-sde-rework
     url: https://developers.eveonline.com/blog/reworking-the-sde-a-fresh-start-for-static-data
     purpose: Dev blog on the SDE rework (old S3 export layout is superseded).
     kind: dev-blog
     status: reference
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   # --- Protocol/spec dev-blogs (per meta.discovery_scope). Endpoint/feature posts are deliberately excluded. ---
   - id: blog-goodbye-swagger
     url: https://developers.eveonline.com/blog/goodbye-swagger-removing-the-last-remnants
     purpose: Dev blog fixing the Swagger 2.0 removal date — /latest/swagger.json and /_latest/swagger.json 404 from 2026-08-11.
     kind: dev-blog
     status: reference
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: blog-legacy-routes-removed
     url: https://developers.eveonline.com/blog/spring-cleaning-legacy-routes-removed-24-march-2026
     purpose: Dev blog on the 2026-03-24 removal of /status.json, /diff, /versions, /headers, and legacy meta-spec variants.
     kind: dev-blog
     status: reference
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: blog-market-orders-rate-limit
     url: https://developers.eveonline.com/blog/market-orders-rate-limit-rolls-out-on-february-24-2026
     purpose: Dev blog on the token-bucket rate limit rolling out to /markets/{region_id}/orders (2026-02-24).
     kind: dev-blog
     status: reference
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
   - id: blog-smarter-caching
     url: https://developers.eveonline.com/blog/smarter-caching-when-events-drive-invalidation
     purpose: Dev blog on event-driven cache invalidation, supplementing the Expires/ETag/Last-Modified caching model.
     kind: dev-blog
     status: reference
-    last_verified: "2026-07-21"
+    last_verified: "2026-08-05"
