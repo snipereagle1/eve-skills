@@ -55,7 +55,7 @@ The OAuth2/SSO handshake itself is well-covered by CCP's SSO docs (in `manifest.
 - **Refresh tokens are per-character** and long-lived — one per authorized character/scope-set. Store them keyed by character.
 - **Scopes are a space-delimited string.** An endpoint needs a specific scope; missing it fails at call time, not login.
 - **Validate the JWT properly:** issuer is `login.eveonline.com` (accept the `https://` form too); audience must contain your `client_id` **and** the literal `"EVE Online"`.
-- **`401` vs `403`:** 401 = missing/expired/invalid token (refresh or re-auth). 403 = valid token but missing the required **scope** *or* the character lacks the in-game **role** (corp/structure endpoints especially). Don't refresh on a 403 — it won't help.
+- **`401` vs `403`:** 401 → token problem, refresh or re-auth. 403 → missing **scope** *or* missing in-game **role**; there is nothing to refresh. (See `references/traps.md`.)
 
 ## When the spec lies or under-documents
 

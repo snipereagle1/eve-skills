@@ -8,7 +8,7 @@ The spec marks an endpoint as needing a scope; you grant the scope; you still ge
 
 ## Ansiblex jump gates: the destination is only in the name string
 
-There is **no** dedicated Ansiblex endpoint and **no** destination-system field anywhere in ESI. An Ansiblex is just a structure with `type_id == 35841` (group 1408, "Upwell Jump Bridge"), and the structure record gives you only the system it physically sits in (`system_id`). The far-side system exists **only inside the auto-generated name string**, formatted `"<Source> » <Dest> - <text>"` and delimited by `" » "` (space + U+00BB guillemet + space). You must string-parse the name to get topology, and a manually renamed gate breaks that parse. See the full walkthrough in [`recipes.md`](recipes.md).
+There is **no** dedicated Ansiblex endpoint and **no** destination-system field anywhere in ESI. An Ansiblex is just a structure with `type_id == 35841` (group 1408, "Upwell Jump Bridge"), and the structure record gives you only the system it physically sits in (`system_id`). The far-side system exists **only inside the auto-generated name string**. So topology has to be string-parsed out of a display name, and a manually renamed gate breaks that parse. The name format and the full walkthrough are in [`recipes.md`](recipes.md).
 
 ## The public structure list hides almost every structure
 
