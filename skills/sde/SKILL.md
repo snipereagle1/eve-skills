@@ -20,9 +20,9 @@ The single framing that makes everything else make sense. The SDE is **not** a l
 The SDE is ~80 datasets, but they cluster into a few domains threaded by a handful of join keys. Once you know the keys, the rest is navigation. Full per-dataset inventory is one hop away in [`references/datasets.md`](references/datasets.md).
 
 - **Items & industry.** `types` is the spine of the whole item system — every ship, module, mineral, blueprint, and skill is a `type` keyed by `typeID` (the record's `_key`). A type carries `groupID` → `groups` → `categoryID` → `categories` (the *mechanical* classification: what a thing **is**), plus optional `marketGroupID` and `metaGroupID`. Reprocessing output is in `typeMaterials` (`materialTypeID`+`quantity`); manufacturing is in `blueprints`.
-- **Dogma (mechanics).** A type's stats and behaviors live in `typeDogma` as `dogmaAttributes` (attributeID→value) and `dogmaEffects` (effectID). Those IDs are *defined* in `dogmaAttributes` / `dogmaEffects` — you **join** to get names and meaning. Two consequences worth knowing up front: **skill prerequisites are encoded as attributes** (182/183/184… = required skill typeID, 277/278/1285… = required level; rank is attribute 275), and **what-modifies-what lives in `dogmaEffects.modifierInfo`** (`modifiedAttributeID`, `modifyingAttributeID`, `operation`).
+- **Dogma (mechanics).** A type's stats and behaviors live in `typeDogma` as `dogmaAttributes` (attributeID→value) and `dogmaEffects` (effectID). Those IDs are *defined* in `dogmaAttributes` / `dogmaEffects` — you **join** to get names and meaning.
 - **Universe / map.** `mapRegions` ⊃ `mapConstellations` ⊃ `mapSolarSystems`, each child carrying its parent's ID. `mapStargates` are the **graph edges** — each has a source `solarSystemID` and a `destination.solarSystemID`; adjacency (and routing) is built from those. Celestials (`mapPlanets`, `mapMoons`, `mapStars`, `mapAsteroidBelts`) hang off systems.
-- **Market.** `marketGroups` is a **separate tree** from `groups` — a browse taxonomy linked by `parentGroupID`, *not* the mechanical group/category hierarchy. Don't conflate them.
+- **Market.** `marketGroups` is the in-game Market browse taxonomy — a tree linked by `parentGroupID`, reached via `types.marketGroupID`.
 - **Factions, NPCs & PvE.** `factions`, `races`, `bloodlines`, `npcCorporations`, `npcStations` (which belong to a `solarSystemID` and an owner corp; their *name* is derived via `operationID` → `stationOperations`), plus agents, missions, and dungeons.
 - **Cosmetics & UI.** `skins` and the `skinr*` family, `icons`, `graphics`.
 
@@ -30,7 +30,7 @@ The SDE is ~80 datasets, but they cluster into a few domains threaded by a handf
 
 Two encodings bite every consumer on the very first record — they're not surprises, they're prerequisites.
 
-- **Prefer JSON Lines (`-jsonl.zip`).** One JSON object per line, streamable, low-memory. It's the format to default to. YAML (`-yaml.zip`) is also published and has native integer keys, but it loads whole-file and blows up on the big datasets (`mapMoons` alone is ~210 MB uncompressed) — reach for it only if you specifically want native int keys.
+- **Prefer JSON Lines (`-jsonl.zip`).** One JSON object per line, streamable, low-memory. It's the format to default to. YAML (`-yaml.zip`) is also published and has native integer keys, but it loads whole-file and blows up on the big datasets — reach for it only if you specifically want native int keys.
 - **Integer-keyed maps are encoded as `_key`/`_value`.** JSON object keys must be strings, so every record's ID is a `"_key"` field, and any *nested* integer-keyed map becomes an array of `{"_key":…, "_value":…}` (sometimes nested several deep, e.g. `masteries`). Reconstruct the real map from those pairs; don't expect a normal object.
 - **Localized names are `{"en":…, "de":…, …}` objects — but not everywhere.** `types`, `groups`, `categories`, `marketGroups`, `factions` name fields are localized objects (pick a language, fall back to `en`). But `dogmaAttributes`/`dogmaEffects` names are **plain strings**, and some records (e.g. `npcStations`) have **no** name at all. Check the field's shape; don't assume every `name` is a localized object.
 
@@ -40,7 +40,7 @@ For interactive exploration during development — "what's the typeID of X", "wh
 
 ## When the data surprises you
 
-Non-obvious pitfalls where reading a record isn't enough — the `published` flag, the two independent hierarchies, the split dogma model, what the SDE deliberately *doesn't* contain, and more: [`references/traps.md`](references/traps.md).
+Non-obvious pitfalls where reading a record isn't enough — the `published` flag, the two independent hierarchies, the split dogma model (where skill prerequisites and what-modifies-what actually live), what the SDE deliberately *doesn't* contain, and more: [`references/traps.md`](references/traps.md).
 
 ## Recipes for multi-step tasks
 
