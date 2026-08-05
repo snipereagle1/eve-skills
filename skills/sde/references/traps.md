@@ -24,8 +24,8 @@ A type's stats are **not** self-describing. `typeDogma` gives you `dogmaAttribut
 
 Two things people miss:
 
-- **Skill prerequisites are dogma attributes, not a field.** `requiredSkill1/2/3` are attributes **182/183/184** (value = the required skill's typeID) and `requiredSkill1/2/3Level` are **277/278/1285** (value = the level). A skill's own training **rank** is attribute **275**. There is no `requiredSkills: [...]` array — you read it out of the attribute soup. (See the skill-plan recipe.)
-- **"What boosts attribute X" is a reverse lookup over `modifierInfo`.** To find every effect that modifies an attribute, scan all `dogmaEffects` for a `modifierInfo` entry whose `modifiedAttributeID` == X. Nothing indexes this for you.
+- **Skill prerequisites are dogma attributes, not a field.** There is no `requiredSkills: [...]` array — the prerequisite skill, its level, and the skill's own training rank are all numbered attributes you read out of the attribute soup. The attribute numbers and the walk are in the skill-plan recipe.
+- **"What boosts attribute X" is a reverse lookup over `modifierInfo`.** Nothing indexes modifiers by the attribute they modify; you scan `dogmaEffects` and build that index yourself. See the reverse-modifier recipe.
 
 ## The SDE is not the whole game
 
