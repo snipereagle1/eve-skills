@@ -25,7 +25,7 @@ Walkthroughs for tasks the spec doesn't obviously map to. Each names the exact e
 2. For each hit, `GET /universe/structures/{structure_id}/` — scope `esi-universe.read_structures.v1` — for `name` and `type_id`; filter to `35841` and parse the name as above.
 3. This yields topology but **no** fuel/state, and only for structures that character can reach.
 
-**Do not** use the public `/universe/structures/` list here — Ansiblexes are never fully-public, so it returns nothing useful (see `traps.md`).
+Both paths need an authenticated character for a reason — see the public-structure-list trap in `traps.md`.
 
 ## Poll a list endpoint without wasting the error budget
 
