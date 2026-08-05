@@ -26,8 +26,6 @@ ESI meters failures, and blowing the budget locks you out of *all* routes, not j
 - **Legacy error limit** — up to 100 non-2xx/3xx responses per 60s window, then **`420`** on everything. Watch **`X-ESI-Error-Limit-Remain`**; when it nears zero, **stop and wait** `X-ESI-Error-Limit-Reset` seconds. Fix the *cause* of the errors — don't retry into the wall.
 - **New token-bucket limit** — returns **`429`** with **`Retry-After`** (seconds) and `X-Ratelimit-*` headers. Honor `Retry-After`.
 
-Backoff is not optional. The correct response to 420/429 is to slow down, not to retry immediately.
-
 ## Identify every request
 
 ESI requires apps to identify themselves. Send a **`User-Agent`** with your **app name + version and a contact email** (browsers that can't set it use `X-User-Agent`; last resort is the `user_agent` query param). Anonymous mass traffic gets throttled or blocked.
@@ -44,8 +42,6 @@ ESI now versions your *whole application* against a date, not per-route `/v1` nu
 
 - **`X-Pages`** (most list routes): fetch `page=1`, read the `X-Pages` response header, loop `page` 2..N. `page` starts at 1.
 - **Cursor** (newer routes): `limit` + opaque `before`/`after` tokens — treat tokens as opaque, walk until an empty page.
-
-Never guess the scheme; check what the endpoint's spec entry declares.
 
 ## Auth: the model and its traps
 

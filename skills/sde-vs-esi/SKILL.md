@@ -24,8 +24,6 @@ The overlap set is small and specific: **type / group / category names and hiera
 - **If the SDE is *not* integrated → default to ESI**, and resolve on demand (for many IDs, one bulk call — see the manifest's `universe-names` route — not a loop). Standing up an ingestion pipeline for incidental lookups is usually more trouble than it's worth.
 - **Override that default when the static data is core functionality or high-volume.** If naming / topology / dogma is on your hot path, or you're resolving IDs by the thousand, the adoption cost pays for itself — adopt the SDE.
 
-This recommendation is **advisory**. Outside the overlap the source is forced; inside it, you weigh the trade-off and decide. The skill informs the call; it doesn't make it for you.
-
 ## The common answer is "both, joined"
 
 Most real work isn't ESI *or* SDE — it's ESI *and* SDE, stitched on shared IDs. ESI returns the live layer as bare integers (`type_id`, `system_id`, `region_id`, `corporation_id`, …); the SDE (or ESI's own `/universe/*` copy) turns those integers into names, volumes, groups, and attributes. "Show my assets with names and volumes" = ESI for the asset list + the SDE to name and size each `type_id`. "Price a fitting" = the SDE for the item skeleton + ESI markets for the ISK. Treat **both-joined** as a first-class outcome, not a fallback.
