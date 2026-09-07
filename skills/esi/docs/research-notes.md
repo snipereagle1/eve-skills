@@ -31,7 +31,7 @@ SSO docs. Confidence tags: **confirmed-primary** / **inferred** / **unconfirmed*
   - ESI **rejects compatibility dates set in the future**.
   - The date **rolls over to the next day at downtime (11:00 UTC)** — i.e. the API "changes date at 11:00 UTC".
   - CCP aims to keep **at least one year of backwards compatibility**. Non-breaking additions (optional request params, new response fields/headers/enum values) ship *within* existing compat dates.
-- **Currently valid value:** The live OpenAPI spec's `CompatibilityDate` parameter enum contains **only `2020-01-01`** (also the spec `info.version`). So as of 2026-07-21 the single accepted/baseline compat date is **`2020-01-01`**. *(Flag: enum has one value today; expect more dates as breaking changes accrue.)*
+- **Currently valid value:** An undated fetch of the OpenAPI spec returns a `CompatibilityDate` parameter enum containing **only `2020-01-01`** (also the spec `info.version`). ~~So as of 2026-07-21 the single accepted/baseline compat date is `2020-01-01`.~~ **Correction (2026-09-07):** that inference is wrong. `/meta/openapi.json` is served *per* compatibility date and the enum reports the date the returned spec was rendered at, so an undated fetch echoes the `2020-01-01` base rather than enumerating what ESI accepts. The accepted dates come from **`GET /meta/compatibility-dates`**; several predate this research date. See [`../references/traps.md`](../references/traps.md).
 - **Relationship to old route versioning:**
   - CCP **merged all the `v`-versions — including `dev`, `latest`, `legacy` — together** over prior months.
   - **Existing versioned routes still work "for the foreseeable future."**
