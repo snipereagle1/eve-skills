@@ -28,7 +28,8 @@ meta:
   compat_date_header: X-Compatibility-Date          # or `compatibility_date` query param
   # Latest compat date the skill is verified against. ESI accepts any date in
   # GET /meta/compatibility-dates (2020-01-01 base .. latest); track the LATEST
-  # (element [0]), not the base. The openapi.json enum only shows the base — ignore it.
+  # (`.compatibility_dates[0]`), not the base. The openapi.json enum is not a
+  # second source for this — it reports the date the fetched spec was rendered at.
   verified_compat_date: "2026-08-04"                # latest per /meta/compatibility-dates
   last_verified: "2026-08-05"
   # Discovery filter for the refresh agent — what this manifest tracks:
@@ -71,13 +72,13 @@ protocol:
 sources:
   - id: openapi-spec
     url: https://esi.evetech.net/meta/openapi.json
-    purpose: Canonical machine-readable spec (OpenAPI 3.1). Source of truth for every endpoint's shape.
+    purpose: Canonical machine-readable spec (OpenAPI 3.1). Source of truth for every endpoint's shape. Served per compatibility date — fetch with X-Compatibility-Date; the CompatibilityDate enum names the date returned.
     kind: spec
     status: canonical
     last_verified: "2026-08-05"
   - id: esi-compatibility-dates
     url: https://esi.evetech.net/meta/compatibility-dates
-    purpose: Canonical list of valid compat dates, newest first. Anchor — element [0] is the latest -> meta.verified_compat_date.
+    purpose: Canonical list of valid compat dates, newest first. Anchor — `.compatibility_dates[0]` is the latest -> meta.verified_compat_date.
     kind: endpoint
     role: anchor
     status: canonical

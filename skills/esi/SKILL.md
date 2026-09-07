@@ -36,6 +36,7 @@ ESI now versions your *whole application* against a date, not per-route `/v1` nu
 
 - Send **`X-Compatibility-Date: YYYY-MM-DD`** (or the `compatibility_date` query param) on every request. Future dates are rejected; the effective date rolls at 11:00 UTC downtime. CCP holds ≥1 year of backward compatibility.
 - Pick the date you built/reviewed against and hold it stable; bump it deliberately when you adopt newer behavior. The value the skill last verified is in `manifest.yaml`.
+- **The spec is dated too.** `/meta/openapi.json` is served *per* compatibility date, and its `CompatibilityDate` enum names the date the spec you're holding was rendered at. Fetch the spec with the date you send, and read `/meta/changelog` for route lifecycle. (See `references/traps.md`.)
 - *Legacy (upgraders only):* old `/v1`, `/latest`, `/legacy` routes still work but receive no new endpoints. New routes are compat-date-only. Migrate off versioned URLs.
 
 ## Paginate to the scheme the endpoint documents

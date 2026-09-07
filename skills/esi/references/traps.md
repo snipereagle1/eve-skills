@@ -1,6 +1,10 @@
 # ESI Traps
 
-Non-obvious pitfalls where reading the endpoint's spec is not enough — the field is missing, the data is encoded in a string, or the access rules aren't what they look like. Each entry: the trap, why it bites, what to do.
+Non-obvious pitfalls where reading the endpoint's spec is not enough — the field is missing, the data is encoded in a string, the access rules aren't what they look like, or the spec on hand is for a different compatibility date. Each entry: the trap, why it bites, what to do.
+
+## A route the spec documents can still `404`
+
+`/meta/openapi.json` is served **per compatibility date**. Fetch it without `X-Compatibility-Date` and you get the `2020-01-01` spec, which still documents routes retired since. The `components.parameters.CompatibilityDate` enum names the date the spec you're holding was rendered at — it reads `2020-01-01` undated and `2026-08-18` when you fetch with that date, and the two specs list different routes. Read a route out of the old spec, call it under a recent date, and the `404` says nothing about why. `/sovereignty/map` is one: `200` at `2020-01-01`, `404` from `2026-05-19`, where a sovereignty rework replaced it with `/sovereignty/systems`. Fetch the spec at the date you send, check the enum matches, and use `/meta/changelog` — keyed by compat date, each change flagged `is_breaking` — for when a route was retired and what replaced it.
 
 ## A `403` can mean "wrong in-game role," not "wrong token"
 
