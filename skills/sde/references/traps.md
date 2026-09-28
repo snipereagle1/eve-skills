@@ -48,3 +48,7 @@ A `blueprints` record has no top-level materials or product. Everything is neste
 ## YAML loads whole-file and blows up on the big datasets
 
 The SDE ships in JSON Lines and YAML. YAML has native integer keys (no `_key`/`_value` dance), which is tempting — but YAML parsers load the entire document into memory, and several datasets are enormous: `mapMoons` is ~210 MB uncompressed, `types` ~144 MB, `missions` ~50 MB. Parsing those as YAML can exhaust memory or take minutes. **Default to JSON Lines and stream it line-by-line;** reach for YAML only for small datasets where native int keys are worth it.
+
+## Jump range uses EVE's light year, not the real one
+
+Jump-drive range is a straight-line distance between two systems' `mapSolarSystems.position` values, which are in meters. The trap is the conversion: EVE defines 1 light year as **exactly 9.46 × 10¹⁵ m**, not the IAU's 9.4607304725808 × 10¹⁵ m. The real value is slightly larger, so it accepts pairs that sit just past the game's limit, and a jump route built with it can include jumps the game rejects. Test `distance <= range_ly * 9.46e15`. The limit is inclusive (`<=`), so a system exactly at max range can be reached. ([EVE developer docs: jump drives](https://developers.eveonline.com/docs/guides/map-data/#jump-drives))
