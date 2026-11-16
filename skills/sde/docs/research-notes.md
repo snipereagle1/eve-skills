@@ -55,6 +55,21 @@ No market prices, no character/player-structure/dynamic data (only NPC stations)
 
 The 2025 rework is not backwards compatible: removed `bsd/` and `universe/` folders (universe folded into `map*`), dropped client-unused fields, renamed `nameID`→`name`, split `masteries`/`typeBonus` out of `types`, added `agentTypes`/`dbuffCollections`/`dogmaUnits`/`dynamicItemAttributes`. Old S3 `sde.zip` layout superseded. Source: rework dev blog (in `manifest.yaml`).
 
+
+## 7. REST API at sde.evetech.net — checked 2026-11-16
+
+Checked live against releases `20261113T110647Z` and `20261116T124006Z` (both build 3698585), and against the build-3698585 zip. No CCP page documents the API yet (searched the static-data docs, the portal and `esi/esi-docs`). Confidence: **confirmed-fetch** unless noted.
+
+- **Layout:** `/` lists tenants; `/tranquility/` lists releases newest first; `/tranquility/latest/` 302s to the current release. The release index is `{release, buildNumber, releaseDate, tables}` with 104 tables, each with `version`, `jsonl{url, recordSchemaUrl}`, `record{urlTemplate, schemaUrl, exampleUrl}` and `flatbuffers{binaryUrl, schemaUrl, binarySchemaUrl}`.
+- **Cache times:** `latest/` and `/tranquility/` `max-age=300`; release index and table redirects `max-age=86400`; blobs and dated records `max-age=31536000, immutable` with `ETag` equal to `version`; 404 `max-age=60`. CORS headers only when the request sends `Origin`.
+- **Gzip:** blobs come back `content-encoding: gzip` even with `Accept-Encoding: identity`.
+- **Keys:** no `_key`; every one of the 104 record schemas has `x-sde-key`. Nested `_key`/`_value` pairs are named fields (`masteries.levels[].{level, certificateIDs}`, `typeBonus.types[].{typeID, bonuses}`). The zip still uses `_key`.
+- **Versioning:** both releases share build 3698585. 98 of 104 tables have the same `version` in both; `accountingEntryTypes` changed `version` with byte-identical data (only its schema's `required` list changed). The newest `_changes.jsonl` is `{"comparedWith":"tranquility@20261113T110647Z","tables":[]}`, so schema-only changes are not listed there.
+- **Zip lag:** the zip at build 3698585 carries `releaseDate` 2026-11-13, the older API release. It has 102 files: no `_changes` or `_schemaChangelog`.
+- **Zero-fill:** started at build 3698585 (compared field by field against builds 3441022 and 3693310). Six fields only: `planetResources.power`/`workforce` and four `sovereigntyUpgrades` power/workforce fields. Documented in `schema-changelog.yaml` under `afterBuildNumber: 3693310`. Same in the zip and the API.
+- **FlatBuffers:** decoded `groups`, `planetResources`, `typeDogma`, `mapSolarSystems` and `types` with `flatc` 25.12.19 (`--raw-binary --defaults-json`); row counts, order and values match the JSONL apart from `flatc` printing doubles to 12 digits. Root vectors are sorted by their `key` field. Not checked: generated-code `LookupByKey`, sort order of nested keyed vectors, the other 99 tables.
+
+
 ## Open uncertainties
 - **Exact community-schemas URL** — referenced by the static-data portal but not captured verbatim; manifest points at the portal page. **Flag.**
 - **Legacy S3 URL** in the manifest is the historically-canonical old location, marked `status: legacy`; not re-verified live (expected gone). **Inferred.**

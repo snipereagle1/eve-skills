@@ -5,8 +5,8 @@
 # new SDE build lives here.
 #
 # MAINTENANCE: to re-verify, walk `sources`, refetch each `url`, confirm it still
-# says what the entry claims, and update `last_verified`. Update `build` from
-# `latest.jsonl` when a new SDE build ships. `status: legacy` entries are kept
+# says what the entry claims, and update `last_verified`. Update `release` (and
+# `build`) from the API's `latest/` redirect when a new release ships. `status: legacy` entries are kept
 # only for people porting pre-2025 code.
 #
 # AUTOMATED REFRESH: `/refresh-sde-manifest` launches the `manifest-refresher`
@@ -16,45 +16,60 @@
 # it proposes.
 #
 # SOURCE ROLES (agent hints; a source with no `role:` is a leaf = liveness only):
-#   role: anchor    -> live value must match a meta field (build number)
+#   role: anchor    -> live value must match a meta field (release name)
 #   role: discovery -> crawl this index/feed for entries not yet listed below
 #   role: skip      -> do not fetch (templated URL / not machine-checkable)
 
 meta:
-  sde_base_url: https://developers.eveonline.com/static-data/
-  # The SDE is a versioned snapshot: its version anchor is a BUILD NUMBER (not a
-  # date/route version). The current build is read from latest.jsonl below.
-  build: 3698585                                    # data build at last_verified
-  build_release_date: "2026-11-13T11:06:47Z"
-  schema_build: 3693310                             # schema-changelog trails the data build
+  api_base_url: https://sde.evetech.net/tranquility/   # REST API (Early Access); the default
+  sde_base_url: https://developers.eveonline.com/static-data/   # zip downloads; the fallback
+  # The version anchor is the RELEASE name (ADR 0003). Several releases can share
+  # one build number, so the build is kept only as a label (skills/sde-vs-esi
+  # mirrors it). The current release is the 302 target of api_base_url + latest/.
+  release: 20261116T124006Z                         # API release at last_verified
+  build: 3698585                                    # that release's buildNumber
+  build_release_date: "2026-11-16T12:40:06Z"
+  zip_release_date: "2026-11-13T11:06:47Z"          # the zip lags the API by one republish of build 3698585
+  schema_build: 3693310                             # newest afterBuildNumber in schema-changelog
   schema_release_date: "2026-11-13"
-  format_default: jsonl                             # prefer JSON Lines; YAML is the alternative
-  # dataset_count is intentionally NOT tracked here. It IS live-verifiable — but
-  # only by downloading + extracting the SDE zip and counting .jsonl files, which
-  # we won't make every refresh pay for (speed over effort; the refresh agent is
-  # curl-only by design). Prose uses "~100"; the exact count is build-stamped in
-  # references/datasets.md (102 as of build 3698585).
+  format_default: api-jsonl                         # API JSONL per table; zip JSONL is the fallback
+  table_count: 104                                  # tables in the release index at `release`
   last_verified: "2026-11-16"
 
 # Volatile format/protocol facts the discipline leans on. Re-verify against the
-# docs + a fresh download.
+# API release index + a fresh zip download.
 protocol:
+  api:
+    release_pointer: latest/                        # 302 -> /tranquility/<release>/, max-age=300
+    release_index: '{release, buildNumber, releaseDate, tables}'
+    table_entry: [version, jsonl.url, jsonl.recordSchemaUrl, record.urlTemplate, flatbuffers.binaryUrl, flatbuffers.schemaUrl, flatbuffers.binarySchemaUrl]
+    record_url: <table>/<key>.json                  # 404 + max-age=60 when missing
+    table_url: <table>.jsonl                        # 302 -> /blobs/<version>.jsonl
+    key_field: x-sde-key                            # in each table's record schema; replaces _key
+    gzip_always: true                               # blobs are content-encoding gzip even for identity
+    retention: current and previous release only
+    cache: {root_latest_and_release_list: max-age=300, release_index: max-age=86400, table_redirect: max-age=86400, blobs: "max-age=31536000, immutable", not_found: max-age=60}
+    cors: access-control-allow-origin * only when the request sends Origin
+    sync_rule: >-
+      Follow latest/ to the release name. If it is unchanged, stop. Otherwise read
+      the release index and download only the tables whose `version` changed.
+      `version` also changes on schema-only changes; `_changes.jsonl` does not
+      list those.
   formats:
-    jsonl: {suffix: -jsonl.zip, streamable: true, note: "one JSON object per line; default"}
-    yaml:  {suffix: -yaml.zip, native_int_keys: true, note: "whole-file load; heavy on mapMoons/types"}
+    api_jsonl: {streamable: true, note: "one table per file, named key field, named nested fields; default"}
+    flatbuffers: {files: [.fb, .fbs, .bfbs], decode: "flatc --json --strict-json --raw-binary --defaults-json", note: "root vector sorted by its key field"}
+    zip_jsonl: {suffix: -jsonl.zip, streamable: true, note: "fallback; _key and _key/_value encoding"}
+    zip_yaml:  {suffix: -yaml.zip, native_int_keys: true, note: "whole-file load; heavy on mapMoons/types"}
   encodings:
-    integer_keys: _key                              # every record's numeric id
-    nested_integer_map: [_key, _value]              # nested int-keyed maps -> array of {_key,_value}
+    api_key: x-sde-key                              # named key field, first in each record
+    zip_integer_keys: _key                          # zip only: every record's id
+    zip_nested_integer_map: [_key, _value]          # zip only; the API uses named fields
     localized_name: {shape: '{"en":..,"de":..}', fallback: en,
                      not_localized: [dogmaAttributes, dogmaEffects],   # plain-string names
                      absent: [npcStations]}                            # no name field
-  caching:
+  zip_caching:
     headers: [ETag, Last-Modified]                  # all resources support both
     build_pointer_cache: max-age=300                # latest.jsonl is cached 5 min
-    sync_rule: >-
-      Read buildNumber from latest.jsonl (or HEAD the latest-*.zip shorthand and
-      read the 302 redirect target, which contains the build number). Only
-      download + re-index when the build number changes.
   skill_prereq_attributes:                          # dogma attrs, not a field (see traps)
     required_skill: [182, 183, 184]
     required_level: [277, 278, 1285]
@@ -62,6 +77,19 @@ protocol:
     sp_formula: "R * 250 * sqrt(32)^(L-1)"          # SP for level L at rank R
 
 sources:
+  - id: api-release-pointer
+    url: https://sde.evetech.net/tranquility/latest/
+    purpose: REST API (Early Access) current release — 302s to /tranquility/<release>/. The version anchor.
+    kind: pointer
+    role: anchor                                    # release name -> meta.release; buildNumber -> meta.build
+    status: early-access
+    last_verified: "2026-11-16"
+  - id: api-releases
+    url: https://sde.evetech.net/tranquility/
+    purpose: REST API release list, newest first (current and previous only).
+    kind: index
+    status: early-access
+    last_verified: "2026-11-16"
   - id: sde-docs
     url: https://developers.eveonline.com/docs/services/static-data/
     purpose: SDE overview — formats, download shorthands, build/versioning, caching, changes feed.
@@ -76,9 +104,8 @@ sources:
     last_verified: "2026-11-16"
   - id: build-pointer
     url: https://developers.eveonline.com/static-data/tranquility/latest.jsonl
-    purpose: Current build pointer — record {"_key":"sde","buildNumber":N,"releaseDate":...}. The version anchor.
+    purpose: Zip build pointer — record {"_key":"sde","buildNumber":N,"releaseDate":...}. Trails the API release.
     kind: pointer
-    role: anchor                                    # buildNumber -> meta.build
     status: canonical
     last_verified: "2026-11-16"
   - id: sde-latest-jsonl

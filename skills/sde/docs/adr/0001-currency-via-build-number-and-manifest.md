@@ -1,5 +1,7 @@
 # Currency via build-number anchor and a documentation manifest
 
+**Status:** superseded by [ADR 0003](0003-currency-via-release-name-and-table-version.md) for the version anchor (release name, not build number). The manifest decision below still holds.
+
 **Context.** The SDE was rebuilt from scratch in 2025 into a new, not-backwards-compatible, build-numbered dataset published every Tranquility deployment. Its shape (datasets, fields) changes over time, and CCP publishes a `schema-changelog.yaml` and a per-build `changes/<build>.jsonl` feed. A distributable reference skill that froze today's field lists in prose would be wrong within a build and would rot invisibly.
 
 **Decision.** The skill body (`SKILL.md`) and reference files state only rot-resistant *legibility* — the domain map, the join keys, the format-decoding rules. Every volatile fact (download URLs, the current build number, format facts, schema/changes URLs) lives in a single structured `manifest.yaml`, and the skill anchors its verification to the SDE **build number** (read from `latest.jsonl`) rather than a date or route version. Maintenance is "re-verify the manifest against its build," not "hunt through prose." This mirrors the ESI skill's compat-date ADR, with the build number playing the role the compat date plays there.
