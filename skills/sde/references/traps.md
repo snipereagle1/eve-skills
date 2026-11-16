@@ -49,6 +49,15 @@ A `blueprints` record has no top-level materials or product. Everything is neste
 
 The SDE ships in JSON Lines and YAML. YAML has native integer keys (no `_key`/`_value` dance), which is tempting — but YAML parsers load the entire document into memory, and several datasets are enormous: `mapMoons` is ~210 MB uncompressed, `types` ~144 MB, `missions` ~50 MB. Parsing those as YAML can exhaust memory or take minutes. **Default to JSON Lines and stream it line-by-line;** reach for YAML only for small datasets where native int keys are worth it.
 
+## A key being present no longer means a non-zero value
+
+Since build **3698585** (2026-11-13) some numeric fields are written even when they are 0, where older builds left the key out. CCP's [schema changelog](https://developers.eveonline.com/static-data/tranquility/schema-changelog.yaml) records each as "now also set when 0":
+
+- `planetResources`: `power` and `workforce`. Record 40013181 went from `{"_key": 40013181, "workforce": 3490}` to `{"_key": 40013181, "power": 0, "workforce": 3490}`. Stars still have no `workforce` key.
+- `sovereigntyUpgrades`: `power_allocation`, `power_production`, `workforce_allocation`, `workforce_production`.
+
+Code that classifies by key presence now reads these wrong: `power !== undefined` labels every one of the ~10,000 Workforce planets as a Power 0 planet. None of these fields held a real 0 before the change, so **test `> 0` instead of presence.** Don't generalize that to "0 means absent": `typeDogma` attribute values, `types.metaLevel` and `dogmaAttributes.defaultValue` hold real zeros. CCP has done this before, with `0.0` and `false` too: builds 3030547 and 3031812 did it to `map*` `statistics` fields, `dogmaAttributes.displayWhenZero` and `npcStations.useOperationName`. Check the changelog when a build lands.
+
 ## Jump range uses EVE's light year, not the real one
 
 Jump-drive range is a straight-line distance between two systems' `mapSolarSystems.position` values, which are in meters. The trap is the conversion: EVE defines 1 light year as **exactly 9.46 × 10¹⁵ m**, not the IAU's 9.4607304725808 × 10¹⁵ m. The real value is slightly larger, so it accepts pairs that sit just past the game's limit, and a jump route built with it can include jumps the game rejects. Test `distance <= range_ly * 9.46e15`. The limit is inclusive (`<=`), so a system exactly at max range can be reached. ([EVE developer docs: jump drives](https://developers.eveonline.com/docs/guides/map-data/#jump-drives))
