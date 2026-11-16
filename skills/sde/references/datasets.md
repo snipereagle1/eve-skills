@@ -2,18 +2,18 @@
 
 The full inventory of the current build-numbered SDE, grouped by domain. Each entry: the JSONL filename, the one question it answers, and its join keys. This is the street-level map; the domain overview and the load-bearing relationships are in [`../SKILL.md`](../SKILL.md).
 
-**Not a schema.** Field lists change per build — for exact fields read the live data or CCP's `schema-changelog.yaml` (see [`../manifest.yaml`](../manifest.yaml)). Every record is keyed by `_key` (its numeric ID); see the format rules in `SKILL.md` for the `_key`/`_value` and localized-name encodings. Verified against build **3441022** (79 datasets); a rework build may add or drop files, so treat this list as current-as-of `last_verified`, not eternal.
+**Not a schema.** Field lists change per build — for exact fields read the live data or CCP's `schema-changelog.yaml` (see [`../manifest.yaml`](../manifest.yaml)). Every record is keyed by `_key` (its numeric ID); see the format rules in `SKILL.md` for the `_key`/`_value` and localized-name encodings. Verified against build **3698585** (102 datasets); a rework build may add or drop files, so treat this list as current-as-of `last_verified`, not eternal.
 
 ## Items & industry — the type system
 
 | Dataset | Answers | Join keys |
 |---|---|---|
-| `types` | What is this item? (name, mass, volume, published, portionSize) | `_key`=typeID → `groupID`, `marketGroupID`, `metaGroupID` |
+| `types` | What is this item? (name, mass, volume, packagedVolume, published, portionSize) | `_key`=typeID → `groupID`, `marketGroupID`, `metaGroupID` |
 | `groups` | The mechanical group a type belongs to | `_key`=groupID → `categoryID` |
 | `categories` | The broadest mechanical class (Ship, Module, Charge…) | `_key`=categoryID |
 | `metaGroups` | Tech tier / meta variant label (T1, T2, Faction…) | `_key`=metaGroupID ← `types.metaGroupID` |
 | `typeMaterials` | Reprocessing composition of a type (base, pre-efficiency) | `_key`=typeID; `materials[].materialTypeID` → `types` |
-| `blueprints` | How a thing is manufactured/invented/reacted | `_key`=blueprintTypeID; `activities.*.{materials,products,skills}[].typeID` → `types` |
+| `blueprints` | How a thing is manufactured/invented/reacted | `_key`=blueprint typeID; `activities.*.{materials,products,skills}[].typeID` → `types` |
 | `typeBonus` | Role/ship bonuses attached to a type | `_key`=typeID |
 | `typeLists` | Named groupings of types (curated lists) | `_key`; entries → `types` |
 | `typeElements` | Structured sub-elements of a type | `_key`=typeID |
@@ -23,6 +23,12 @@ The full inventory of the current build-numbered SDE, grouped by domain. Each en
 | `contrabandTypes` | Contraband status/fines by faction | `_key`=typeID → `factions` |
 | `controlTowerResources` | POS tower fuel/resource requirements | `_key`=typeID |
 | `planetSchematics` | Planetary-industry production recipes | `_key`=schematicID; inputs/outputs → `types` |
+| `industryActivities` | The six industry activities (Manufacturing, Copying…) | `_key`=activityID |
+| `industryAssemblyLines` | Assembly-line kinds and their base time/material multipliers | `_key`=assemblyLineID → `activityID` |
+| `industryInstallationTypes` | Which assembly lines a structure or station type offers | `_key`=typeID → `types`; `assemblyLines[].assemblyLineID` → `industryAssemblyLines` |
+| `industryModifierSources` | Which dogma attributes modify industry cost/time/material per activity | `_key`=typeID → `types`; `<activity>.{cost,time,material}[].dogmaAttributeID` → `dogmaAttributes` |
+| `industryTargetFilters` | Named category filters that industry modifiers apply to | `_key`=targetFilterID; `categoryIDs` → `categories` |
+| `metenoxMoonDrill` | Metenox Moon Drill cycle time, efficiency and fuel use | `_key`=typeID → `types` |
 
 ## Dogma — mechanics
 
@@ -35,6 +41,13 @@ The full inventory of the current build-numbered SDE, grouped by domain. Each en
 | `dogmaUnits` | Display units for attribute values | `_key`=unitID |
 | `dynamicItemAttributes` | Mutaplasmid mutation ranges (abyssal modules) | `_key`=mutatorTypeID → `types` |
 | `dbuffCollections` | Warfare-buff attribute bundles | `_key` → `dogmaAttributes` |
+| `appliedProximityEffects` | Warfare buffs a type applies to ships near it | `_key`=typeID → `types`; nested `_key`/`_value` `dbuffs` → `dbuffCollections` |
+| `systemDbuffEmitters` | Types that pulse warfare buffs across a system | `_key`=typeID → `types`; nested `_key`/`_value` `dbuffs` → `dbuffCollections` |
+| `systemWideEffects` | System-wide effects (e.g. wormhole environments) | `_key`=typeID → `types`; nested `_key`/`_value` `dbuffs` → `dbuffCollections`; `eligibleTypeListID` → `typeLists` |
+| `linkWithShip` | Types that link to a ship and apply buffs while linked | `_key`=typeID → `types`; nested `_key`/`_value` `dbuffs` → `dbuffCollections` |
+| `proximityTrap` | Types that trigger when a ship comes in range | `_key`=typeID → `types`; `triggerFilterTypeListID` → `typeLists` |
+| `fighterAbilities` | Fighter ability definitions | `_key`=fighterAbilityID |
+| `fighterAbilitiesByType` | The abilities in each fighter type's slots | `_key`=typeID → `types`; `abilitySlot0..2.abilityID` → `fighterAbilities` |
 
 ## Universe / map
 
@@ -83,6 +96,11 @@ The full inventory of the current build-numbered SDE, grouped by domain. Each en
 | `freelanceJobSchemas` | Freelance-job (mission) schemas | `_key`; nested `_value` |
 | `sovereigntyUpgrades` | Sovereignty structure upgrades | `_key`=typeID → `types` |
 | `planetResources` | Planetary resource distributions | `_key` → planets/`types` |
+| `schools` | Character-creation schools | `_key`=schoolID → `corporationID`, `raceID`; `startingStations` → `npcStations` |
+| `schoolMap` | Which solar system each school is in | `_key` → `schoolID`, `solarSystemID` |
+| `stationStandingsRestrictions` | Standing a faction requires before its stations offer a service | `_key`=factionID → `factions`; nested `_key`/`_value` `services` |
+| `corporationRoles` | Player-corporation role definitions | `_key`=roleID → `roleGroupIDs` |
+| `corporationRoleGroups` | Groupings of corporation roles | `_key`=roleGroupID |
 
 ## Cosmetics & UI
 
@@ -100,6 +118,7 @@ The full inventory of the current build-numbered SDE, grouped by domain. Each en
 | `skinrSlotConfigurations` | SKINR slot configurations | `_key` |
 | `skinrSlotNames` | SKINR slot names | `_key` |
 | `skinrTierThresholds` | SKINR tier thresholds | `_key`/`_value` |
+| `skinrSlotsToMaterials` | Which SKINR material each slot uses, per faction | `_key`=factionID; nested `_value` `{materialID, slotID}` |
 | `graphics` | Graphic asset references for types | `_key`=graphicID |
 | `graphicMaterialSets` | Graphic material sets | `_key` |
 | `icons` | Icon asset references | `_key`=iconID ← e.g. `marketGroups.iconID` |
@@ -115,6 +134,8 @@ The full inventory of the current build-numbered SDE, grouped by domain. Each en
 | `shipTreeFactions` | Ship-tree faction groupings | `_key` → `factions` |
 | `shipTreeGroups` | Ship-tree group groupings | `_key`/`_value` → `groups` |
 | `archetypes` | Structure/entity archetypes | `_key` |
+| `skillPlans` | In-client recommended skill plans | `_key`=skillPlanID → `factionID`; `milestones[]`/`skillRequirements[]` `{typeID, level}` → `types` |
+| `expertSystems` | Expert Systems (temporary skill grants) | `_key`=typeID → `types`; `skillsGranted[]` `{typeID, level}` → `types` |
 
 ## Meta
 
@@ -122,3 +143,5 @@ The full inventory of the current build-numbered SDE, grouped by domain. Each en
 |---|---|---|
 | `_sde` | This build's number + release date | `{"_key":"sde","buildNumber":…,"releaseDate":…}` |
 | `translationLanguages` | The language codes used in localized name objects | `_key`=language code |
+| `accountingEntryTypes` | Wallet journal entry types | `_key`=accountingEntryTypeID |
+| `notificationTypes` | In-game notification types | `_key`=notificationTypeID |

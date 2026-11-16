@@ -36,7 +36,7 @@ This covers the overwhelming majority of "what is this ID called / what's the ID
 **Goal:** go from a blueprint to what it makes, or from a product back to the blueprint that makes it.
 
 - **Blueprint → product:** read the `blueprints` record and look under `activities.manufacturing.products` (or `activities.reaction.products` for reactions) — each `{typeID, quantity}`. Inputs are the sibling `materials[]`; required skills are `skills[]`; duration is `time`. Not every blueprint has every activity — check the key exists.
-- **Product → blueprint:** there is **no** reverse index. Build one once: stream `blueprints`, and for each, map every `activities.*.products[].typeID` → this `blueprintTypeID`. Then look the product typeID up in that map. (A product can, rarely, come from more than one blueprint/activity — keep a list.)
+- **Product → blueprint:** there is **no** reverse index. Build one once: stream `blueprints`, and for each, map every `activities.*.products[].typeID` → this record's `_key` (the blueprint's typeID; build 3698585 dropped the duplicate `blueprintTypeID` field). Then look the product typeID up in that map. (A product can, rarely, come from more than one blueprint/activity — keep a list.)
 
 ## Walk the market-group tree
 

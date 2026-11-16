@@ -11,7 +11,7 @@ The SDE as a point-in-time dataset stamped with a **build number** and rebuilt (
 _Avoid_: version, release, dump, snapshot (unqualified)
 
 **Domain map**:
-The always-loaded core of the skill — the grouping of the ~80 datasets into a few domains plus the join keys that thread them (`typeID`, `groupID`/`categoryID`, the map hierarchy, `parentGroupID`). The cure for SDE opacity. Stops at join keys; never descends to field lists.
+The always-loaded core of the skill — the grouping of the ~100 datasets into a few domains plus the join keys that thread them (`typeID`, `groupID`/`categoryID`, the map hierarchy, `parentGroupID`). The cure for SDE opacity. Stops at join keys; never descends to field lists.
 _Avoid_: schema, ERD, data dictionary, catalog
 
 **Decoding rule**:
