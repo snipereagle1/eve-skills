@@ -16,7 +16,7 @@ The single framing that makes everything else make sense. The SDE is **not** a l
 
 ## The domain map
 
-The SDE is ~80 datasets, but they cluster into a few domains threaded by a handful of join keys. Once you know the keys, the rest is navigation. Full per-dataset inventory is one hop away in [`references/datasets.md`](references/datasets.md).
+The SDE is ~100 datasets, but they cluster into a few domains threaded by a handful of join keys. Once you know the keys, the rest is navigation. Full per-dataset inventory is one hop away in [`references/datasets.md`](references/datasets.md).
 
 - **Items & industry.** `types` is the spine of the whole item system — every ship, module, mineral, blueprint, and skill is a `type` keyed by `typeID` (the record's `_key`). A type carries `groupID` → `groups` → `categoryID` → `categories` (the *mechanical* classification: what a thing **is**), plus optional `marketGroupID` and `metaGroupID`. Reprocessing output is in `typeMaterials` (`materialTypeID`+`quantity`); manufacturing is in `blueprints`.
 - **Dogma (mechanics).** A type's stats and behaviors live in `typeDogma` as `dogmaAttributes` (attributeID→value) and `dogmaEffects` (effectID). Those IDs are *defined* in `dogmaAttributes` / `dogmaEffects` — you **join** to get names and meaning.
