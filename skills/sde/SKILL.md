@@ -11,7 +11,7 @@ The SDE was rebuilt from scratch in 2025 and the new layout is **not** backwards
 
 The single framing that makes everything else make sense. The SDE is **not** live data — it's a dataset rebuilt on (roughly) every Tranquility deployment. CCP publishes each rebuild as a **release** named by timestamp (e.g. `20261116T124006Z`) on the REST API at `sde.evetech.net`. You fetch what you need, keep it, and use it offline until the release changes.
 
-- **Get it from the REST API** (Early Access; CCP expects to deprecate the zip). It serves one record (`<table>/<id>.json`) or one whole table (`<table>.jsonl`) per request, so you never need the full dataset to answer a lookup. Layout, gzip handling and FlatBuffers: [`references/api.md`](references/api.md).
+- **Get it from the REST API** (generally available since 2026-11-19; CCP wants to retire the zip eventually). It serves one record (`<table>/<id>.json`) or one whole table (`<table>.jsonl`) per request, so you never need the full dataset to answer a lookup. Layout, gzip handling and FlatBuffers: [`references/api.md`](references/api.md).
 - **Sync, don't re-download.** `HEAD …/tranquility/latest/` and read the release name from the redirect. If it's unchanged, stop. Otherwise read the release index and download only the tables whose `version` hash changed. Blindly re-pulling every table each run is the anti-pattern.
 - **Version by release name, not build number.** Two releases can share a build number (a republish that changes only schemas), so a build check misses real changes.
 - **The zip is the fallback** — one ~100 MB file per build, with a different key encoding. See [`references/zip.md`](references/zip.md).

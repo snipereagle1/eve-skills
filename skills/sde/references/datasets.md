@@ -143,7 +143,7 @@ The full inventory of the SDE tables, grouped by domain. Each entry: the table n
 |---|---|---|
 | `_sde` | This build's number + release date | `{"key":"sde","buildNumber":…,"releaseDate":…}` |
 | `translationLanguages` | The language codes used in localized name objects | `language` code |
-| `_changes` | Which tables changed since the previous release (API only; skips schema-only changes) | `comparedWith` (`tranquility@<release>`) |
+| `_changes` | Keys added to each table since the previous release (API only; omits edited records) | `comparedWith` (`tranquility@<release>`) |
 | `_schemaChangelog` | CCP's schema changelog as records (API only) | `afterBuildNumber` |
 | `accountingEntryTypes` | Wallet journal entry types | `accountingEntryTypeID` |
 | `notificationTypes` | In-game notification types | `notificationTypeID` |
