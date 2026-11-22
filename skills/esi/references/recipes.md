@@ -4,9 +4,9 @@ Walkthroughs for tasks the spec doesn't obviously map to. Each names the exact e
 
 ## Resolve names for many IDs (types, systems, regions) — use the SDE first
 
-**The trap:** looping `/universe/types/{id}` (etc.) for thousands of IDs burns the error budget and is slow.
+**The trap:** looping a per-ID request for thousands of IDs burns the error budget and is slow. Since compat date 2026-11-19 ESI no longer serves `/universe/types/{id}` and the other static `/universe` routes at all (see `blog-sde-over-http` in the manifest).
 
-1. For **static** names — type, group, category, system, constellation, region, dogma — download the **SDE** once (see `sde-docs` in the manifest) and resolve locally. This covers the overwhelming majority of "what is this ID called" needs.
+1. For **static** names — type, group, category, system, constellation, region, dogma — use the **SDE** (see the `sde` skill): fetch the table once and resolve locally. This covers the overwhelming majority of "what is this ID called" needs.
 2. Only when you must resolve **arbitrary mixed IDs at runtime** (e.g. names of characters/corps/alliances that aren't in the SDE), use ESI's bulk **`POST /universe/names/`** — one call resolves up to 1000 IDs of many categories. No scope required.
 3. Never resolve one-ID-per-request in a loop when a bulk or offline path exists.
 

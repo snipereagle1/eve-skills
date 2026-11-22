@@ -6,16 +6,16 @@ The domain vocabulary (Type, Group, Category, Blueprint, DogmaAttribute, SolarSy
 
 ## Language
 
-**Build snapshot**:
-The SDE as a point-in-time dataset stamped with a **build number** and rebuilt (roughly) every Tranquility deployment. The skill's version anchor: it pins what it verified to a build number, not a route/date version. The current build is the `buildNumber` in `latest.jsonl`.
-_Avoid_: version, release, dump, snapshot (unqualified)
+**Release**:
+The SDE as a point-in-time dataset, published on the REST API under a timestamp name (e.g. `20261116T124006Z`) and rebuilt (roughly) every Tranquility deployment. The skill's version anchor (ADR 0003): it pins what it verified to a release name. Several releases can share one **build number**, which is kept only as a label. The current release is the redirect target of `latest/`.
+_Avoid_: version, dump, snapshot (unqualified), build (as the version)
 
 **Domain map**:
-The always-loaded core of the skill — the grouping of the ~100 datasets into a few domains plus the join keys that thread them (`typeID`, `groupID`/`categoryID`, the map hierarchy, `parentGroupID`). The cure for SDE opacity. Stops at join keys; never descends to field lists.
+The always-loaded core of the skill — the grouping of the ~100 tables into a few domains plus the join keys that thread them (`typeID`, `groupID`/`categoryID`, the map hierarchy, `parentGroupID`). The cure for SDE opacity. Stops at join keys; never descends to field lists.
 _Avoid_: schema, ERD, data dictionary, catalog
 
 **Decoding rule**:
-A format prerequisite for reading *any* SDE record: the `_key`/`_value` integer-key encoding (JSON keys must be strings) and the `{"en":…}` localized-name objects (present on some datasets, plain strings on `dogmaAttributes`/`dogmaEffects`, absent on others). Lives in the spine because it bites the first record, not as a trap.
+A format prerequisite for reading *any* SDE record: the named key field per table (`x-sde-key`; `_key` and `_key`/`_value` pairs in the zip) and the `{"en":…}` localized-name objects (present on some datasets, plain strings on `dogmaAttributes`/`dogmaEffects`, absent on others). Lives in the spine because it bites the first record, not as a trap.
 _Avoid_: quirk, gotcha, edge case
 
 **Trap**:
@@ -27,7 +27,7 @@ A short walkthrough for a multi-step SDE task that names the exact datasets and 
 _Avoid_: workflow, tutorial, guide
 
 **Documentation manifest**:
-The structured `manifest.yaml` enumerating every canonical URL and volatile fact, each with `url`, `purpose`, `kind`, `status`, and `last_verified`, plus the current `build`. The single place to update when a new SDE build ships; walkable for drift-checking.
+The structured `manifest.yaml` enumerating every canonical URL and volatile fact, each with `url`, `purpose`, `kind`, `status`, and `last_verified`, plus the current `release` and `build`. The single place to update when a new SDE release ships; walkable for drift-checking.
 _Avoid_: sources list, links, bibliography
 
 **SDE boundary** *(shared across the `esi`, `sde`, and `sde-vs-esi` contexts — do not expand here)*:

@@ -2,14 +2,14 @@
 
 Walkthroughs for tasks whose path through the data isn't obvious. Each names the exact datasets and join keys; for exact record fields, read the live data (see [`../manifest.yaml`](../manifest.yaml)). These are tool-agnostic — they describe the walk over the raw JSONL so they work in any application. (For interactive dev-time poking, the `eve-sde-mcp` server does several of these in one call, but nothing here depends on it.)
 
-Throughout: every record is keyed by `_key` (its numeric ID); build id→record and name→record indexes over the file once, then seek.
+Throughout: every record is keyed by its table's key field (`typeID`, `groupID`, … — see [`datasets.md`](datasets.md); `_key` in the zip). Build id→record and name→record indexes over the table once, then seek. For a handful of IDs, the REST API serves single records (`<table>/<id>.json`) and you can skip the index.
 
 ## Resolve names ↔ IDs in bulk, offline
 
 **The point of the whole skill.** Resolving thousands of static IDs to names (or back) by hitting a live API per ID is slow and burns rate/error budget. The SDE answers it locally.
 
 1. Load the relevant dataset(s) — `types` for items, `groups`/`categories` for classification, `mapRegions`/`mapConstellations`/`mapSolarSystems` for places, `factions`, etc.
-2. Build two indexes as you stream: `id → record` (from `_key`) and `lowercased-name → id`. Remember names are **localized objects** on most datasets (`name.en`, …) but **plain strings** on a few (`dogmaAttributes`, `dogmaEffects`) and **absent** on others (`npcStations`) — index the field in whatever shape it actually has.
+2. Build two indexes as you stream: `id → record` (from the key field) and `lowercased-name → id`. Remember names are **localized objects** on most datasets (`name.en`, …) but **plain strings** on a few (`dogmaAttributes`, `dogmaEffects`) and **absent** on others (`npcStations`) — index the field in whatever shape it actually has.
 3. Resolve in either direction against the in-memory index. For user-facing output, filter `published == true` so removed/test types don't surface.
 
 This covers the overwhelming majority of "what is this ID called / what's the ID for this name" needs without a single network call.
@@ -36,7 +36,7 @@ This covers the overwhelming majority of "what is this ID called / what's the ID
 **Goal:** go from a blueprint to what it makes, or from a product back to the blueprint that makes it.
 
 - **Blueprint → product:** read the `blueprints` record and look under `activities.manufacturing.products` (or `activities.reaction.products` for reactions) — each `{typeID, quantity}`. Inputs are the sibling `materials[]`; required skills are `skills[]`; duration is `time`. Not every blueprint has every activity — check the key exists.
-- **Product → blueprint:** there is **no** reverse index. Build one once: stream `blueprints`, and for each, map every `activities.*.products[].typeID` → this record's `_key` (the blueprint's typeID; build 3698585 dropped the duplicate `blueprintTypeID` field). Then look the product typeID up in that map. (A product can, rarely, come from more than one blueprint/activity — keep a list.)
+- **Product → blueprint:** there is **no** reverse index. Build one once: stream `blueprints`, and for each, map every `activities.*.products[].typeID` → this record's key, `blueprintTypeID` (`_key` in the zip, where build 3698585 dropped the duplicate `blueprintTypeID` field). Then look the product typeID up in that map. (A product can, rarely, come from more than one blueprint/activity — keep a list.)
 
 ## Walk the market-group tree
 

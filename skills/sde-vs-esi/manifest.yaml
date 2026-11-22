@@ -25,9 +25,9 @@
 
 meta:
   # This skill is valid only relative to a known state of BOTH sources.
-  verified_compat_date: "2026-08-18"                # mirrors skills/esi manifest (ESI anchor)
-  build: 3698585                                    # mirrors skills/sde manifest (SDE anchor)
-  last_verified: "2026-11-16"
+  verified_compat_date: "2026-11-19"                # mirrors skills/esi manifest (ESI anchor)
+  build: 3724492                                    # mirrors skills/sde manifest (SDE anchor)
+  last_verified: "2026-11-21"
   # What this manifest tracks — nothing else belongs here. Used by the refresher
   # to filter the changelog scan: only route ADD/REMOVE under these prefixes.
   discovery_scope: >-
@@ -43,22 +43,6 @@ meta:
 # `universe-names` / `universe-ids` are the bulk resolvers to prefer over per-ID
 # loops when the SDE isn't integrated.
 overlap_set:
-  - concept: type names & classification
-    esi_route: [GET /universe/types, "GET /universe/types/{type_id}"]
-    sde_dataset: [types, groups, categories]
-    note: "types is the spine; groupID -> groups -> categoryID. Also GET /universe/groups[/{id}], /universe/categories[/{id}]."
-  - concept: solar-system / constellation / region map
-    esi_route: ["GET /universe/systems[/{system_id}]", "GET /universe/constellations[/{constellation_id}]", "GET /universe/regions[/{region_id}]"]
-    sde_dataset: [mapSolarSystems, mapConstellations, mapRegions]
-    note: "Names + hierarchy overlap. The raw stargate GRAPH (mapStargates edges) is richer in the SDE; ESI's /universe/stargates/{id} is per-gate only."
-  - concept: celestials & stargates (per-object)
-    esi_route: ["GET /universe/stargates/{stargate_id}", "GET /universe/planets/{planet_id}", "GET /universe/moons/{moon_id}", "GET /universe/stars/{star_id}", "GET /universe/asteroid_belts/{asteroid_belt_id}"]
-    sde_dataset: [mapStargates, mapPlanets, mapMoons, mapStars, mapAsteroidBelts]
-    note: "Per-object lookup overlaps; bulk/adjacency work is far cheaper from the SDE."
-  - concept: NPC stations
-    esi_route: "GET /universe/stations/{station_id}"
-    sde_dataset: [npcStations, stationOperations]
-    note: "NPC stations only. PLAYER structures are ESI-only (/universe/structures) — not in the overlap. SDE station name is derived via operationID -> stationOperations."
   - concept: market group tree
     esi_route: ["GET /markets/groups", "GET /markets/groups/{market_group_id}"]
     sde_dataset: [marketGroups]
@@ -67,25 +51,28 @@ overlap_set:
     esi_route: ["GET /dogma/attributes[/{attribute_id}]", "GET /dogma/effects[/{effect_id}]"]
     sde_dataset: [dogmaAttributes, dogmaEffects, typeDogma]
     note: "Definitions of what an attribute/effect IS. Per-type values live in typeDogma (SDE) or /dogma/dynamic (ESI, for mutated modules)."
-  - concept: factions / races / bloodlines / ancestries
-    esi_route: ["GET /universe/factions", "GET /universe/races", "GET /universe/bloodlines", "GET /universe/ancestries"]
-    sde_dataset: [factions, races, bloodlines, ancestries]
-    note: "Static lore/classification data (character-creation chain: race -> bloodline -> ancestry)."
-  - concept: planetary schematics
-    esi_route: "GET /universe/schematics/{schematic_id}"
-    sde_dataset: [planetSchematics]
-    note: "PI schematics; static."
-  - concept: graphics / icons
-    esi_route: ["GET /universe/graphics", "GET /universe/graphics/{graphic_id}"]
-    sde_dataset: [graphics, icons]
-    note: "Asset references; static."
+
+# Removed from ESI at compat date 2026-11-19 (blog-sde-over-http), so no longer
+# overlap: these are SDE-only now, served by the SDE REST API. Kept so the
+# refresher doesn't re-propose them and so old code can be ported.
+removed_from_esi:
+  compat_date: "2026-11-19"
+  routes: [GET /universe/ancestries, "GET /universe/asteroid_belts/{asteroid_belt_id}", GET /universe/bloodlines,
+           "GET /universe/categories[/{category_id}]", "GET /universe/constellations[/{constellation_id}]",
+           GET /universe/factions, "GET /universe/graphics[/{graphic_id}]", "GET /universe/groups[/{group_id}]",
+           "GET /universe/moons/{moon_id}", "GET /universe/planets/{planet_id}", GET /universe/races,
+           "GET /universe/regions[/{region_id}]", "GET /universe/schematics/{schematic_id}",
+           "GET /universe/stargates/{stargate_id}", "GET /universe/stars/{star_id}",
+           "GET /universe/stations/{station_id}", "GET /universe/systems[/{system_id}]",
+           "GET /universe/types[/{type_id}]"]
+  sde_replacement: "SDE REST API record lookup, <table>/<key>.json (see skills/sde/references/api.md)"
 
 # Bulk ID resolvers on the ESI side — the right fallback when the SDE isn't
 # integrated and you must name IDs at runtime. Prefer these over per-ID GET loops.
 resolvers:
   - id: universe-names
     route: POST /universe/names
-    purpose: Resolve up to 1000 mixed IDs (types, systems, stations, characters, corps, alliances...) to names in one call. No scope. Covers IDs the SDE lacks (characters/corps/alliances).
+    purpose: Resolve up to 1000 mixed IDs (types, systems, stations, regions, factions, characters, corps, alliances...) to names in one call. No scope. Kept at compat date 2026-11-19. It returns names only, so use the SDE REST API for other static fields. Covers IDs the SDE lacks (characters/corps/alliances).
     max_ids: 1000
   - id: universe-ids
     route: POST /universe/ids
@@ -97,20 +84,20 @@ sources:
     purpose: Canonical ESI spec (the kind=spec source). The overlap walk uses it for TARGETED presence checks of each overlap_set esi_route ("are these specific paths present?" — never a full enumeration; the spec is large and truncates).
     kind: spec                                      # leaf: liveness + targeted overlap-route presence
     status: canonical
-    last_verified: "2026-11-16"
+    last_verified: "2026-11-21"
   - id: esi-changelog
     url: https://esi.evetech.net/meta/changelog
-    purpose: Machine-readable ESI changelog, keyed by compat date with is_breaking flags. Discovery signal for overlap-set drift — an added/removed /universe|/dogma|/markets route shows here (a removal is breaking). Filter with meta.discovery_scope.
+    purpose: Machine-readable ESI changelog, keyed by compat date; each entry has a `type` (new/changed/removed). Discovery signal for overlap-set drift — an added/removed /universe|/dogma|/markets route shows here. Filter with meta.discovery_scope.
     kind: endpoint
     role: discovery
     status: canonical
-    last_verified: "2026-11-16"
+    last_verified: "2026-11-21"
   - id: sde-datasets
     url: https://developers.eveonline.com/docs/services/static-data/
     purpose: SDE overview (liveness only). The `overlap_set[].sde_dataset` names are confirmed against the LOCAL sibling map `../sde/references/datasets.md` (relative to this manifest), not this URL — that is the source of truth for dataset existence.
     kind: docs
     status: canonical
-    last_verified: "2026-11-16"
+    last_verified: "2026-11-21"
   - id: sibling-esi
     url: ../esi/manifest.yaml
     purpose: The ESI skill's manifest — the ESI half of the dual anchor. Read it and compare its meta.verified_compat_date to this manifest's; drift = esi bumped and this didn't.
@@ -118,7 +105,7 @@ sources:
     role: mirror                                    # Read this manifest; compare the `anchor` field to our meta.<anchor>
     anchor: verified_compat_date
     status: canonical
-    last_verified: "2026-11-16"
+    last_verified: "2026-11-21"
   - id: sibling-sde
     url: ../sde/manifest.yaml
     purpose: The SDE skill's manifest — the SDE half of the dual anchor. Read it and compare its meta.build to this manifest's; drift = sde bumped and this didn't.
@@ -126,4 +113,10 @@ sources:
     role: mirror                                    # Read this manifest; compare the `anchor` field to our meta.<anchor>
     anchor: build
     status: canonical
-    last_verified: "2026-11-16"
+    last_verified: "2026-11-21"
+  - id: blog-sde-over-http
+    url: https://developers.eveonline.com/blog/the-sde-over-http-static-data-dynamically
+    purpose: Dev blog on the SDE REST API and the 2026-11-19 removal of ESI's static /universe routes — the reason most of the old overlap set is SDE-only now.
+    kind: dev-blog
+    status: reference
+    last_verified: "2026-11-21"

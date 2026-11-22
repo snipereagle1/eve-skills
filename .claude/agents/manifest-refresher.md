@@ -44,9 +44,14 @@ Each entry in `sources:` is one of three roles. Read the entry's `role:` field:
 
 - **`role: anchor`** — a source whose live value must equal a `meta:` field.
   Compare and report any mismatch. The two anchor procedures:
-  - **SDE build** (`meta.build`): `curl -sL <build-pointer url>` (the
-    `latest.jsonl` record) and read `buildNumber`. Also read the newest build in
-    the `schema-changelog` and compare to `meta.schema_build`.
+  - **SDE release** (`meta.release`, with `meta.build` alongside it):
+    `curl -sI <release-pointer url>` (`https://sde.evetech.net/tranquility/latest/`)
+    and read the release name from the 302 `location`
+    (`/tranquility/<release>/`). Then `curl -sL --compressed` that release's
+    index and read `buildNumber` for `meta.build`. Several releases can share
+    one build number, so a changed release with an unchanged build is still
+    drift. Also read the newest build in the `schema-changelog` and compare to
+    `meta.schema_build`.
   - **ESI compat-date** (`meta.verified_compat_date`): read the `role: anchor`
     source `GET /meta/compatibility-dates` — it returns
     `{"compatibility_dates":[<newest>, ..., "2020-01-01"]}`. Element `[0]` is the
@@ -154,7 +159,7 @@ Return exactly this structure as your final message — nothing written to disk:
 - <id>: 🔴 <what the manifest claims> → <what the fetch showed>
 
 ## Proposed edits (paste-ready, YOU are not applying these)
-- meta.build: 3441022 → <new>
+- meta.release: <old> → <new>  (and meta.build if the build number changed)
 - meta.last_verified: "<old>" → "<today>"
 - <any add/modify/status-flip, as a concrete line>
 

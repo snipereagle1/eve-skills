@@ -35,3 +35,13 @@ Every `sde_dataset` referenced in `manifest.yaml` and `references/reconciliation
 
 - **ESI-only** (no SDE equivalent): character/corp/alliance data, wallet, assets, contracts, live market orders & prices, player structures, mail, fleet, kills.
 - **SDE-only** (ESI can't fully answer, or only one-ID-at-a-time behind the error budget): blueprint materials/products (`blueprints`, `typeMaterials`), full dogma model incl. `modifierInfo`, skill prerequisites (dogma attrs 182/183/184 + 277/278/1285, rank 275), the raw stargate adjacency graph, complete type tree.
+
+## Update 2026-11-21: ESI compat date 2026-11-19 removes the static /universe routes
+
+Checked live against compat date `2026-11-19` and build `3724492`:
+
+- The ESI changelog's `2026-11-19` entry lists 25 GET routes with `type: removed`: every overlap route under `/universe` (types, groups, categories, systems, constellations, regions, stargates, planets, moons, stars, asteroid belts, NPC stations, factions, races, bloodlines, ancestries, graphics, schematics). `GET /universe/types/587` returns 404 at `2026-11-19` and 200 at `2026-08-18`.
+- Still served (200): `/dogma/attributes[/{id}]`, `/dogma/effects/{id}`, `/markets/groups[/{id}]`, `/universe/structures`, `/universe/system_jumps`, `POST /universe/names`. `POST /universe/names` still names `inventory_type`, `solar_system`, `station`, `region` and `faction` IDs.
+- The SDE REST API serves the same records one at a time: `types/587.json`, `mapSolarSystems/30000142.json`, `factions/500001.json` and `npcStations/60003760.json` all return 200 under `latest/`.
+
+So the overlap set shrinks to market groups and dogma definitions, and the "SDE not integrated" default moves from ESI to the SDE REST API's record lookup. The removed routes are listed under `removed_from_esi` in `manifest.yaml`.
