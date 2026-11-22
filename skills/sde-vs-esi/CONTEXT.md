@@ -9,15 +9,15 @@ The spine's decision procedure, producing three outcomes — ESI-only, SDE-only,
 _Avoid_: datasource selection, decision matrix, which-to-use guide
 
 **Overlap set**:
-The reference data *both* sources can answer — type/system/group/dogma names and hierarchies (ESI's `/universe/*`, `/markets/groups/` vs. the SDE's datasets). The only place the routing rule is advisory rather than forced; everything outside it is single-sourced and non-negotiable.
+The reference data *both* sources can answer. Since ESI compat date 2026-11-19 removed the static `/universe` routes, that is market groups (`/markets/groups`) and dogma definitions (`/dogma/*`) vs. the SDE's datasets. The only place the routing rule is advisory rather than forced; everything outside it is single-sourced and non-negotiable.
 _Avoid_: shared data, duplicated endpoints
 
 **Adoption cost**:
-The SDE's precondition that ESI lacks — standing up an ingestion pipeline to load and refresh the dataset. The reason the overlap default is a function of what the user has *already built*, not just the data kind.
+The cost of standing up an ingestion pipeline to load and refresh SDE tables, as opposed to fetching records from the SDE REST API on demand. The reason the overlap default is a function of what the user has *already built*, not just the data kind.
 _Avoid_: setup cost, integration overhead
 
 **Integration state**:
-Whether the caller already has the SDE ingested/loaded. If yes, the SDE is always preferred in the overlap set; if no, ESI is the default *unless* the static data is core functionality or high-volume, which justifies paying the adoption cost.
+Whether the caller already has the SDE ingested/loaded. If yes, resolve locally; if no, fetch records from the SDE REST API on demand *unless* the static data is core functionality or high-volume, which justifies paying the adoption cost.
 _Avoid_: SDE availability, environment
 
 **Documentation manifest**:

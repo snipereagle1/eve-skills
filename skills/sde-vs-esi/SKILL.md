@@ -12,21 +12,23 @@ For how to *use* each source correctly once you've picked it, defer to the [`esi
 Before weighing anything, check whether the data even *exists* on both sides. Usually it doesn't, and then there's nothing to decide:
 
 - **Live / character / corporation / market / structure state → ESI, only ESI.** Assets, wallet, skills-trained, contracts, open market orders and prices, fleet, mail, a player structure's fuel or services, kills. The SDE has none of it. It changes constantly; a static dump could never carry it.
-- **Static / reference / mechanical → the SDE, canonically.** Blueprint materials and outputs, reprocessing yields, the full dogma model (what an attribute *means*, what modifies what), the complete type tree, skill prerequisites, planetary schematics, the raw stargate graph. Some of this ESI cannot answer at all; the rest it answers one-ID-at-a-time behind the error budget.
+- **Static / reference / mechanical → the SDE, canonically.** Type, group and category records, the universe map, NPC stations, blueprint materials and outputs, reprocessing yields, the full dogma model (what an attribute *means*, what modifies what), skill prerequisites, planetary schematics, the raw stargate graph. ESI no longer serves most of this (see below).
 
 Only when both sources genuinely carry the same data — the **overlap set** — do you actually have a decision. Everything else is dictated by where the data lives.
 
-## In the overlap, the default depends on what you've already built
+## Static data now comes from the SDE, with or without a pipeline
 
-The overlap set is small and specific: **type / group / category names and hierarchies, the solar-system / constellation / region map, NPC stations, market groups, dogma attribute & effect definitions, factions / races / bloodlines.** ESI exposes all of it under `/universe/*`, `/dogma/*`, `/markets/groups`; the SDE has the same records offline. Here — and only here — you choose, and the choice turns on the SDE's **adoption cost**: an ingestion pipeline to download, index, and refresh it, which ESI's just-make-a-request model doesn't charge you:
+Since compat date 2026-11-19 ESI no longer serves static data: the `/universe` routes for types, groups, categories, the map, celestials, NPC stations, factions, races, bloodlines, ancestries, graphics and schematics are gone (404). CCP moved that data to the SDE's REST API at `sde.evetech.net`, which serves one record per request. So the old trade-off — an SDE ingestion pipeline or ESI's just-make-a-request lookups — no longer exists for that data. The **SDE's adoption cost** is now only a question of *how* you use the SDE:
 
-- **If the SDE is already integrated / that data is already loaded → prefer the SDE, always.** It's free, unauthenticated, not metered against the error budget, and bulk-joinable in one local pass. Resolving 10,000 type names locally beats 10,000 conditional GETs by every measure.
-- **If the SDE is *not* integrated → default to ESI**, and resolve on demand (for many IDs, one bulk call — see the manifest's `universe-names` route — not a loop). Standing up an ingestion pipeline for incidental lookups is usually more trouble than it's worth.
-- **Override that default when the static data is core functionality or high-volume.** If naming / topology / dogma is on your hot path, or you're resolving IDs by the thousand, the adoption cost pays for itself — adopt the SDE.
+- **If the SDE is already integrated / that data is already loaded → resolve locally, always.** It's free, unauthenticated, not metered against the error budget, and bulk-joinable in one local pass.
+- **If the SDE is *not* integrated → fetch records from the SDE REST API on demand** (`<table>/<id>.json`; see the [`sde`](../sde/SKILL.md) skill). It needs no pipeline and is served from a CDN, outside ESI's error budget. For names only, ESI's bulk `POST /universe/names` (the manifest's `universe-names` resolver) still names types, systems, stations, regions and factions, up to 1000 IDs per call.
+- **Integrate the SDE when the static data is core functionality or high-volume.** If naming / topology / dogma is on your hot path, or you're resolving IDs by the thousand, fetch whole tables (`<table>.jsonl`) and sync them by release instead of looping record lookups.
+
+The **overlap set** — data both sources still serve — is now small: **market groups** (`/markets/groups`) and **dogma attribute & effect definitions** (`/dogma/*`). There, the same rule applies: local SDE if integrated; otherwise either source works, and ESI is fine for incidental lookups.
 
 ## The common answer is "both, joined"
 
-Most real work isn't ESI *or* SDE — it's ESI *and* SDE, stitched on shared IDs. ESI returns the live layer as bare integers (`type_id`, `system_id`, `region_id`, `corporation_id`, …); the SDE (or ESI's own `/universe/*` copy) turns those integers into names, volumes, groups, and attributes. "Show my assets with names and volumes" = ESI for the asset list + the SDE to name and size each `type_id`. "Price a fitting" = the SDE for the item skeleton + ESI markets for the ISK. Treat **both-joined** as a first-class outcome, not a fallback.
+Most real work isn't ESI *or* SDE — it's ESI *and* SDE, stitched on shared IDs. ESI returns the live layer as bare integers (`type_id`, `system_id`, `region_id`, `corporation_id`, …); the SDE (local, or its REST API) turns those integers into names, volumes, groups, and attributes. "Show my assets with names and volumes" = ESI for the asset list + the SDE to name and size each `type_id`. "Price a fitting" = the SDE for the item skeleton + ESI markets for the ISK. Treat **both-joined** as a first-class outcome, not a fallback.
 
 How the two actually reconcile — the shared join keys, the ID→name resolution that is the workhorse of nearly every EVE tool, and the one caveat that the SDE build lags live — is in [`references/reconciliation.md`](references/reconciliation.md).
 

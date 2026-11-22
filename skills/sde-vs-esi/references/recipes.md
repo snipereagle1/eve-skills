@@ -9,8 +9,8 @@ Walkthroughs where the answer is **both** ESI and the SDE, joined. Each names th
 1. **ESI, live layer:** `GET /characters/{character_id}/assets/` — scope `esi-assets.read_assets.v1`. Paginate with `X-Pages`. Each row is `{ item_id, type_id, location_id, quantity, ... }` — no names, no sizes.
 2. **Reference layer — the join:** for each distinct `type_id`, resolve name + `volume` + `groupID`:
    - **SDE integrated (preferred):** local lookup in `types` (name, `volume`, `groupID`→`groups`→`categoryID`). One pass, no API cost.
-   - **SDE not integrated:** batch the distinct `type_id`s through `POST /universe/names` for names; `GET /universe/types/{type_id}` for `volume` if you need it. Prefer adopting the SDE if you do this often — this is exactly the "core / high-volume" override.
-3. **Resolve `location_id`:** a station/structure or another asset (nesting). NPC stations resolve via the SDE `npcStations` or `GET /universe/stations/{id}`; **player structures are ESI-only** — `GET /universe/structures/{structure_id}` (scope `esi-universe.read_structures.v1`).
+   - **SDE not integrated:** batch the distinct `type_id`s through `POST /universe/names` for names; fetch `types/{type_id}.json` from the SDE REST API for `volume` if you need it. Prefer adopting the SDE if you do this often — this is exactly the "core / high-volume" override.
+3. **Resolve `location_id`:** a station/structure or another asset (nesting). NPC stations resolve via the SDE `npcStations` or `POST /universe/names`; **player structures are ESI-only** — `GET /universe/structures/{structure_id}` (scope `esi-universe.read_structures.v1`).
 4. Join and render, degrading gracefully on any `type_id` the SDE build doesn't have yet — see the build-lag caveat in [`reconciliation.md`](reconciliation.md).
 
 ## Price a fitting
